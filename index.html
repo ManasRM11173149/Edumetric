@@ -23,8 +23,8 @@
         <div class="login-card">
             <h1 data-i18n="appTitle">EduMetric</h1>
             <p data-i18n="appSubtitle">Teacher Dashboard for Quiz &amp; Finance Management</p>
-            <form class="login-form" onsubmit="handleLogin(event)">
-                <button type="submit" class="login-btn" data-i18n="getStarted">Get Started</button>
+            <form class="login-form" onsubmit="handleLogin(event); return false;">
+                <button type="button" class="login-btn" data-i18n="getStarted" onclick="handleLogin()">Get Started</button>
             </form>
             <p style="text-align: center; font-size: 12px; color: var(--on-surface-variant); margin-top: 20px;" data-i18n="tagline">
                 A fresh workspace &bull; All data stays in your browser
