@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="EduMetric Quiz - Take your quiz now">
+    <meta name="theme-color" content="#0d0d15">
+    <title>EduMetric - Take Quiz</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        :root {
+            --surface: #13131b;
+            --surface-container: #1f1f27;
+            --surface-bright: #393841;
+            --on-surface: #e4e1ed;
+            --on-surface-variant: #c7c4d7;
+            --primary: #c0c1ff;
+            --on-primary: #1000a9;
+            --primary-container: #8083ff;
+            --secondary: #b7c8e1;
+            --tertiary: #ffb783;
+            --outline: #908fa0;
+            --error: #ffb4ab;
+            --background: #0d0d15;
+            --success: #00c853;
+        }
+        html, body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, var(--background) 0%, #1a1a25 100%); color: var(--on-surface); line-height: 1.5; min-height: 100vh; margin: 0; padding: 0; }
+        .quiz-wrap { max-width: 760px; margin: 0 auto; padding: 32px 20px 140px 20px; }
+        .quiz-head { margin-bottom: 24px; }
+        .quiz-head h1 { font-size: 28px; color: var(--primary); margin-bottom: 6px; }
+        .quiz-head p { color: var(--on-surface-variant); font-size: 14px; }
+        .q-card { background: rgba(31,31,39,0.6); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px 22px; margin-bottom: 16px; transition: all 0.2s ease; }
+        .q-card:hover { border-color: rgba(192,193,255,0.3); background: rgba(31,31,39,0.8); }
+        .q-card .q-num { font-size: 12px; color: var(--tertiary); font-weight: 600; text-transform: uppercase; }
+        .q-card .q-text { font-size: 16px; font-weight: 600; margin: 8px 0 16px; }
+        .opt-row { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1.5px solid rgba(255,255,255,0.1); border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: all .2s ease; background: rgba(255,255,255,0.02); }
+        .opt-row:hover { border-color: var(--primary); background: rgba(192,193,255,0.08); transform: translateX(4px); }
+        .opt-row input { width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary); }
+        .opt-row.selected { border-color: var(--primary); background: rgba(192,193,255,0.12); }
+        .opt-row.correct { border-color: var(--success); background: rgba(0,200,83,0.12); }
+        .opt-row.wrong { border-color: var(--error); background: rgba(255,180,171,0.12); }
+        .fill-input { width: 100%; padding: 12px; background: var(--surface-bright); border: 1.5px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--on-surface); font-size: 14px; transition: all 0.2s ease; }
+        .fill-input:focus { outline: none; border-color: var(--primary); background: rgba(192,193,255,0.05); }
+        .result-banner { text-align: center; padding: 28px; border-radius: 12px; margin-bottom: 24px; background: rgba(192,193,255,0.1); border: 1px solid var(--primary); animation: slideUp 0.5s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .result-banner .score { font-size: 48px; font-weight: 700; color: var(--primary); }
+        .feedback { font-size: 13px; margin-top: 8px; }
+        .feedback.ok { color: var(--success); }
+        .feedback.no { color: var(--error); }
+        .feedback.pending { color: var(--tertiary); }
+        .diff-pill { display: inline-block; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 20px; vertical-align: middle; }
+        .diff-easy { background: rgba(0,200,83,0.15); color: var(--success); }
+        .diff-medium { background: rgba(255,183,77,0.18); color: #ffb74d; }
+        .diff-hard { background: rgba(255,90,90,0.18); color: #ff5a5a; }
+        .reference-panel { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px 18px; margin-bottom: 20px; }
+        .reference-panel h3 { font-size: 14px; color: var(--tertiary); margin: 0 0 10px; }
+        .reference-panel p { font-size: 13px; margin: 6px 0; }
+        .reference-panel .ref-excerpt { font-size: 12.5px; color: var(--on-surface-variant); background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px 12px; max-height: 140px; overflow-y: auto; white-space: pre-wrap; margin-top: 6px; }
+        .short-answer-input { resize: vertical; font-family: inherit; }
+        .short-note { font-size: 11px; color: var(--on-surface-variant); margin-top: 6px; }
+        .error-box { text-align: center; padding: 60px 20px; color: var(--on-surface-variant); }
+        .error-box h1 { color: var(--primary); }
+        .error-box .btn-primary { display: inline-block; margin-top: 16px; }
+        .submit-button-container { position: fixed; bottom: 0; left: 0; right: 0; padding: 16px 20px; background: linear-gradient(to top, var(--background), transparent); backdrop-filter: blur(10px); display: flex; justify-content: center; z-index: 100; }
+        .submit-btn { width: 100%; max-width: 760px; padding: 16px; font-size: 16px; font-weight: 600; background: linear-gradient(135deg, var(--primary), var(--primary-container)); color: var(--on-primary); border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(192,193,255,0.3); }
+        .submit-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(192,193,255,0.4); }
+        .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-primary { font-size: 15px; font-weight: 600; background: linear-gradient(135deg, var(--primary), var(--primary-container)); color: var(--on-primary); border: none; border-radius: 8px; padding: 14px 22px; cursor: pointer; transition: all .2s ease; }
+        .btn-primary:hover:not(:disabled) { transform: translateY(-1px); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-secondary { font-size: 13px; font-weight: 600; background: rgba(255,255,255,0.06); color: var(--on-surface); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 10px 16px; cursor: pointer; transition: all .2s ease; }
+        .btn-secondary:hover { border-color: var(--primary); }
+        /* ---- Student intake screen ---- */
+        .intake-card { background: rgba(31,31,39,0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 28px 24px; margin-top: 12px; }
+        .intake-card h1 { font-size: 24px; color: var(--primary); margin: 0 0 4px; }
+        .intake-card .sub { font-size: 13px; color: var(--on-surface-variant); margin-bottom: 22px; }
+        .field-group { margin-bottom: 16px; }
+        .field-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--on-surface-variant); }
+        .field-group input, .field-group select { width: 100%; box-sizing: border-box; padding: 12px 14px; background: var(--surface-bright); border: 1.5px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--on-surface); font-size: 14px; font-family: inherit; transition: all 0.2s ease; }
+        .field-group input:focus, .field-group select:focus { outline: none; border-color: var(--primary); background: rgba(192,193,255,0.05); }
+        .field-error { color: var(--error); font-size: 12px; margin-top: 6px; display: none; }
+        .field-error.show { display: block; }
+        .intake-meta-bar { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--on-surface-variant); background: rgba(255,255,255,0.04); border-radius: 8px; padding: 10px 14px; margin-bottom: 22px; }
+        .intake-meta-bar b { color: var(--on-surface); }
+        .top-id-bar { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 13px; color: var(--on-surface-variant); background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 12px 16px; margin-bottom: 22px; }
+        .top-id-bar span b { color: var(--primary); }
+        .result-code-box { background: var(--surface-bright); border: 1px dashed var(--outline); border-radius: 8px; padding: 12px 14px; font-family: monospace; font-size: 12px; word-break: break-all; margin: 12px 0; max-height: 90px; overflow-y: auto; }
+        .sync-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 14px; }
+        .progress-bar-wrap { height: 6px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; margin-bottom: 28px; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--primary-container)); transition: width 0.3s ease; }
+    </style>
+</head>
+<body>
+    <div class="quiz-wrap"><div id="quizApp"></div></div>
+    <div class="submit-button-container" id="submitContainer" style="display: none;"><button class="submit-btn" onclick="submitQuiz()" id="submitBtn">Submit Quiz</button></div>
+    <script>
+    (function () {
+        "use strict";
+
+        /* ---------------------------------------------------------------
+           Helpers
+        --------------------------------------------------------------- */
+        function letter(i) { return ["A", "B", "C", "D", "E", "F"][i] || "?"; }
+        function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+        function gradeLabel(g) {
+            if (g === undefined || g === null || g === "") return "";
+            return g === "K" ? "Kindergarten" : "Grade " + g;
+        }
+        const GRADE_OPTIONS = ["K", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"];
+
+        /* ---------------------------------------------------------------
+           Robust decode: never throw, always validate shape before use.
+        --------------------------------------------------------------- */
+        function decodeQuiz() {
+            try {
+                const m = location.hash.match(/data=([^&]+)/);
+                if (!m || !m[1]) return null;
+                let json;
+                try {
+                    json = decodeURIComponent(escape(atob(m[1])));
+                } catch (e1) {
+                    // atob can throw on malformed/truncated base64 (e.g. link
+                    // got clipped by a messaging app). Try a tolerant pass.
+                    const cleaned = m[1].replace(/[^A-Za-z0-9+/=]/g, "");
+                    json = decodeURIComponent(escape(atob(cleaned)));
+                }
+                const parsed = JSON.parse(json);
+                return sanitizeQuiz(parsed);
+            } catch (e) {
+                console.error("Could not decode quiz link:", e);
+                return null;
+            }
+        }
+
+        /* Validate + repair the decoded payload so a malformed/older link
+           never crashes the page — bad questions are simply dropped. */
+        function sanitizeQuiz(raw) {
+            if (!raw || typeof raw !== "object") return null;
+            if (!Array.isArray(raw.questions)) return null;
+
+            const questions = raw.questions
+                .filter(q => q && typeof q === "object" && typeof q.q === "string" && q.q.trim())
+                .map(q => {
+                    if (q.type === "fill") {
+                        return { type: "fill", q: q.q, answer: q.answer == null ? "" : String(q.answer) };
+                    }
+                    if (q.type === "short") {
+                        return { type: "short", q: q.q, answer: q.answer == null ? "" : String(q.answer) };
+                    }
+                    const options = Array.isArray(q.options) ? q.options.filter(o => o != null && o !== "") : [];
+                    if (options.length < 2) return null; // unusable MCQ, drop it
+                    let answer = typeof q.answer === "number" ? q.answer : parseInt(q.answer, 10);
+                    if (!(answer >= 0 && answer < options.length)) answer = 0;
+                    return { type: "mcq", q: q.q, options: options, answer: answer };
+                })
+                .filter(Boolean);
+
+            if (!questions.length) return null;
+
+            // Cap defensively — a corrupted/huge payload shouldn't hang the page.
+            const capped = questions.slice(0, 200);
+
+            const validDifficulties = ["easy", "medium", "hard"];
+            const difficulty = validDifficulties.includes(raw.difficulty) ? raw.difficulty : "medium";
+
+            let textbook = null;
+            if (raw.textbook && typeof raw.textbook === "object" && typeof raw.textbook.excerpt === "string" && raw.textbook.excerpt.trim()) {
+                textbook = {
+                    fileName: typeof raw.textbook.fileName === "string" ? raw.textbook.fileName : "Source material",
+                    excerpt: raw.textbook.excerpt.trim().slice(0, 5000),
+                    trimmed: !!raw.textbook.trimmed
+                };
+            }
+
+            return {
+                title: (typeof raw.title === "string" && raw.title.trim()) ? raw.title.trim() : "EduMetric Quiz",
+                grade: (typeof raw.grade === "string" || typeof raw.grade === "number") ? String(raw.grade) : "",
+                topic: typeof raw.topic === "string" ? raw.topic : "",
+                difficulty: difficulty,
+                notes: typeof raw.notes === "string" ? raw.notes.trim().slice(0, 2000) : "",
+                textbook: textbook,
+                questions: capped
+            };
+        }
+
+        const quiz = decodeQuiz();
+        const app = document.getElementById("quizApp");
+
+        /* Student-entered identity, captured before the quiz starts. */
+        let student = { name: "", grade: "", batch: "" };
+        let quizStarted = false;
+
+        const DIFFICULTY_LABELS = { easy: "🟢 Easy", medium: "🟡 Medium", hard: "🔴 Hard" };
+        function difficultyPillHtml(level) {
+            const safe = DIFFICULTY_LABELS[level] ? level : "medium";
+            return '<span class="diff-pill diff-' + safe + '">' + DIFFICULTY_LABELS[safe] + '</span>';
+        }
+        function referencePanelHtml() {
+            if (!quiz.notes && !quiz.textbook) return "";
+            let html = '<div class="reference-panel"><h3>📚 Study Reference</h3>';
+            if (quiz.textbook) {
+                html += '<p class="ref-source"><b>Source:</b> ' + esc(quiz.textbook.fileName) + '</p>';
+                html += '<div class="ref-excerpt">' + esc(quiz.textbook.excerpt) + (quiz.textbook.trimmed ? ' …' : '') + '</div>';
+            }
+            if (quiz.notes) {
+                html += '<p class="ref-notes"><b>Section focus:</b> ' + esc(quiz.notes) + '</p>';
+            }
+            html += '</div>';
+            return html;
+        }
+
+        /* ---------------------------------------------------------------
+           Error state
+        --------------------------------------------------------------- */
+        if (!quiz) {
+            app.innerHTML =
+                '<div class="error-box">' +
+                '<h1>EduMetric</h1>' +
+                '<p>This quiz link is invalid, incomplete, or has expired. Please ask your teacher for a new link.</p>' +
+                '<p style="font-size:12px;margin-top:10px;">If you copy-pasted this link, make sure the entire link (including everything after <code>#data=</code>) was copied.</p>' +
+                '</div>';
+        } else {
+            renderIntake();
+        }
+
+        /* ---------------------------------------------------------------
+           STEP 1 — Name / Grade / Batch intake
+        --------------------------------------------------------------- */
+        function renderIntake() {
+            const gradeOpts = ['<option value="">-- Select Grade --</option>']
+                .concat(GRADE_OPTIONS.map(g => '<option value="' + esc(g) + '">' + esc(gradeLabel(g)) + '</option>'))
+                .join("");
+
+            app.innerHTML =
+                '<div class="quiz-head"><h1>' + esc(quiz.title) + ' ' + difficultyPillHtml(quiz.difficulty) + '</h1>' +
+                '<p>English / Language Arts' + (quiz.grade ? " — " + esc(gradeLabel(quiz.grade)) : "") +
+                ' &bull; ' + quiz.questions.length + ' question' + (quiz.questions.length === 1 ? "" : "s") + '</p></div>' +
+                referencePanelHtml() +
+                '<div class="intake-card">' +
+                '<h1 style="font-size:18px;">Before you start</h1>' +
+                '<p class="sub">Enter your details so your teacher can match this result to your profile.</p>' +
+                '<div class="field-group">' +
+                '<label for="studentName">Full Name</label>' +
+                '<input type="text" id="studentName" placeholder="e.g., Alex Rivera" autocomplete="name">' +
+                '<div class="field-error" id="errName">Please enter your name.</div>' +
+                '</div>' +
+                '<div class="field-group">' +
+                '<label for="studentGrade">Grade</label>' +
+                '<select id="studentGrade">' + gradeOpts + '</select>' +
+                '<div class="field-error" id="errGrade">Please select your grade.</div>' +
+                '</div>' +
+                '<div class="field-group">' +
+                '<label for="studentBatch">Batch</label>' +
+                '<input type="text" id="studentBatch" placeholder="e.g., A" autocomplete="off">' +
+                '<div class="field-error" id="errBatch">Please enter your batch.</div>' +
+                '</div>' +
+                '<button class="btn-primary" id="startBtn" style="width:100%;">Start Quiz</button>' +
+                '</div>';
+
+            // Pre-fill grade from the quiz itself, if the teacher set one —
+            // student can still change it if the quiz was shared across grades.
+            const gradeSel = document.getElementById("studentGrade");
+            if (quiz.grade && GRADE_OPTIONS.indexOf(quiz.grade) !== -1) {
+                gradeSel.value = quiz.grade;
+            }
+
+            document.getElementById("startBtn").addEventListener("click", handleStart);
+            // Allow Enter key to submit from any intake field.
+            app.querySelectorAll(".intake-card input").forEach(inp => {
+                inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); handleStart(); } });
+            });
+        }
+
+        function handleStart() {
+            const nameEl = document.getElementById("studentName");
+            const gradeEl = document.getElementById("studentGrade");
+            const batchEl = document.getElementById("studentBatch");
+            const name = (nameEl.value || "").trim();
+            const grade = gradeEl.value || "";
+            const batch = (batchEl.value || "").trim();
+
+            let valid = true;
+            document.getElementById("errName").classList.toggle("show", !name);
+            document.getElementById("errGrade").classList.toggle("show", !grade);
+            document.getElementById("errBatch").classList.toggle("show", !batch);
+            if (!name) valid = false;
+            if (!grade) valid = false;
+            if (!batch) valid = false;
+            if (!valid) return;
+
+            student = { name: name, grade: grade, batch: batch };
+            quizStarted = true;
+            renderQuiz();
+            document.getElementById("submitContainer").style.display = "flex";
+        }
+
+        /* ---------------------------------------------------------------
+           STEP 2 — Quiz itself
+        --------------------------------------------------------------- */
+        function renderQuiz() {
+            let html =
+                '<div class="quiz-head"><h1>' + esc(quiz.title) + ' ' + difficultyPillHtml(quiz.difficulty) + '</h1>' +
+                '<p>English / Language Arts' + (quiz.grade ? " — " + esc(gradeLabel(quiz.grade)) : "") +
+                ' &bull; ' + quiz.questions.length + ' questions</p></div>' +
+                referencePanelHtml() +
+                '<div class="top-id-bar">' +
+                '<span>Name: <b>' + esc(student.name) + '</b></span>' +
+                '<span>Grade: <b>' + esc(gradeLabel(student.grade)) + '</b></span>' +
+                '<span>Batch: <b>' + esc(student.batch) + '</b></span>' +
+                '</div>' +
+                '<div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>' +
+                '<form id="quizForm">';
+
+            quiz.questions.forEach(function (q, i) {
+                html += '<div class="q-card" id="qcard-' + i + '"><div class="q-num">Question ' + (i + 1) + ' of ' + quiz.questions.length + '</div><div class="q-text">' + esc(q.q) + '</div>';
+                if (q.type === "fill") {
+                    html += '<input class="fill-input" type="text" name="q' + i + '" placeholder="Type your answer..." autocomplete="off" data-q="' + i + '">';
+                } else if (q.type === "short") {
+                    html += '<textarea class="fill-input short-answer-input" name="q' + i + '" rows="3" placeholder="Type your answer..." data-q="' + i + '"></textarea>' +
+                        '<p class="short-note">Short answer — your teacher will review this response; it is not auto-graded.</p>';
+                } else {
+                    (q.options || []).forEach(function (o, oi) {
+                        html += '<label class="opt-row" id="opt-' + i + '-' + oi + '" data-q="' + i + '" data-opt="' + oi + '">' +
+                            '<input type="radio" name="q' + i + '" value="' + oi + '" onchange="window.__quizUpdateSelection(' + i + ')">' +
+                            '<span><b>' + letter(oi) + '.</b> ' + esc(o) + '</span></label>';
+                    });
+                }
+                html += '</div>';
+            });
+            html += '</form><div id="resultArea" style="margin-top:24px;"></div>';
+            app.innerHTML = html;
+            requestAnimationFrame(attachOptimizedEventListeners);
+        }
+
+        function attachOptimizedEventListeners() {
+            const form = document.getElementById("quizForm");
+            if (!form) return;
+            form.addEventListener("change", function (e) {
+                if (e.target.type === "radio") {
+                    const qIndex = parseInt(e.target.name.replace("q", ""), 10);
+                    updateSelection(qIndex);
+                }
+                updateProgress();
+            });
+            form.addEventListener("input", function (e) {
+                if ((e.target.tagName === "INPUT" && e.target.type === "text") || e.target.tagName === "TEXTAREA") updateProgress();
+            });
+        }
+
+        function updateSelection(qIndex) {
+            document.querySelectorAll('[data-q="' + qIndex + '"]').forEach(function (el) { el.classList.remove("selected"); });
+            const selected = document.querySelector('[data-q="' + qIndex + '"] input:checked');
+            if (selected) selected.closest("label").classList.add("selected");
+        }
+        window.__quizUpdateSelection = updateSelection;
+
+        function updateProgress() {
+            const fill = document.getElementById("progressFill");
+            if (!fill) return;
+            let answered = 0;
+            quiz.questions.forEach(function (q, i) {
+                if (q.type === "fill" || q.type === "short") {
+                    const el = document.querySelector('[name="q' + i + '"]');
+                    if (el && el.value && el.value.trim()) answered++;
+                } else {
+                    if (document.querySelector('[name="q' + i + '"]:checked')) answered++;
+                }
+            });
+            fill.style.width = Math.round((answered / quiz.questions.length) * 100) + "%";
+        }
+
+        /* ---------------------------------------------------------------
+           STEP 3 — Grade & submit
+        --------------------------------------------------------------- */
+        function submitQuiz() {
+            if (!quizStarted) return;
+            const submitBtn = document.getElementById("submitBtn");
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Submitting...";
+
+            let correct = 0;
+            let gradableCount = 0;
+            let shortAnswerCount = 0;
+            const answers = [];
+            quiz.questions.forEach(function (q, i) {
+                if (q.type === "fill") {
+                    gradableCount++;
+                    const fieldEl = document.querySelector('[name="q' + i + '"]');
+                    const val = ((fieldEl && fieldEl.value) || "").trim().toLowerCase();
+                    const ok = !!val && val === String(q.answer || "").trim().toLowerCase();
+                    if (ok) correct++;
+                    answers.push({ question: i, answered: val, correct: ok });
+                    const card = document.getElementById("qcard-" + i);
+                    if (card) {
+                        const fb = document.createElement("div");
+                        fb.className = "feedback " + (ok ? "ok" : "no");
+                        fb.textContent = ok ? "✓ Correct" : "✗ Correct answer: " + q.answer;
+                        card.appendChild(fb);
+                    }
+                    if (fieldEl) fieldEl.disabled = true;
+                } else if (q.type === "short") {
+                    shortAnswerCount++;
+                    const fieldEl = document.querySelector('[name="q' + i + '"]');
+                    const val = (fieldEl && fieldEl.value) || "";
+                    answers.push({ question: i, answered: val, correct: null, ungraded: true });
+                    const card = document.getElementById("qcard-" + i);
+                    if (card) {
+                        const fb = document.createElement("div");
+                        fb.className = "feedback pending";
+                        fb.textContent = val.trim() ? "📝 Submitted for teacher review" : "⚠ No answer submitted";
+                        card.appendChild(fb);
+                    }
+                    if (fieldEl) fieldEl.disabled = true;
+                } else {
+                    gradableCount++;
+                    const sel = document.querySelector('[name="q' + i + '"]:checked');
+                    const chosen = sel ? parseInt(sel.value, 10) : -1;
+                    const isCorrect = chosen === q.answer;
+                    if (isCorrect) correct++;
+                    answers.push({ question: i, answered: chosen, correct: isCorrect });
+                    (q.options || []).forEach(function (o, oi) {
+                        const row = document.getElementById("opt-" + i + "-" + oi);
+                        if (!row) return;
+                        const radio = row.querySelector("input");
+                        if (radio) radio.disabled = true;
+                        if (oi === q.answer) row.classList.add("correct");
+                        else if (oi === chosen) row.classList.add("wrong");
+                    });
+                }
+            });
+
+            // Score is computed only from auto-gradable questions (MCQ/fill).
+            // Short-answer responses are collected and flagged for the
+            // teacher to review manually — they're never silently scored.
+            const pct = gradableCount ? Math.round((correct / gradableCount) * 100) : null;
+            const msg = pct === null ? "Submitted! Your teacher will review your short-answer responses. 📝"
+                : pct >= 80 ? "Excellent work! 🌟" : pct >= 60 ? "Good effort! Keep practicing. 👍" : "Keep studying — you'll get there! 📚";
+
+            const resultRecord = {
+                timestamp: new Date().toISOString(),
+                studentName: student.name,
+                studentGrade: student.grade,
+                studentBatch: student.batch,
+                quizTitle: quiz.title || "External Quiz",
+                quizGrade: quiz.grade,
+                quizTopic: quiz.topic,
+                quizDifficulty: quiz.difficulty || "medium",
+                score: pct,
+                correctCount: correct,
+                gradableCount: gradableCount,
+                shortAnswerCount: shortAnswerCount,
+                totalQuestions: quiz.questions.length,
+                answers: answers
+            };
+
+            // 1) Same-device/browser sync path (works when teacher opens the
+            //    link in the same browser, e.g. for testing or a shared
+            //    classroom computer).
+            const gradeSyncKey = "edumetric_external_quiz_results";
+            try {
+                let results = [];
+                const stored = localStorage.getItem(gradeSyncKey);
+                if (stored) results = JSON.parse(stored);
+                if (!Array.isArray(results)) results = [];
+                results.push(resultRecord);
+                if (results.length > 100) results = results.slice(-100);
+                localStorage.setItem(gradeSyncKey, JSON.stringify(results));
+            } catch (e) {
+                console.warn("Could not store quiz result locally:", e);
+            }
+
+            // 2) Live-preview sync path (works when the teacher launched this
+            //    quiz from a window/tab they still control, e.g. a preview).
+            try {
+                if (window.opener) {
+                    window.opener.postMessage({ type: "quizSubmitted", result: resultRecord }, "*");
+                }
+                if (window.parent && window.parent !== window) {
+                    window.parent.postMessage({ type: "quizSubmitted", result: resultRecord }, "*");
+                }
+            } catch (e) { /* cross-origin postMessage failures are expected & harmless */ }
+
+            // 3) Cross-device path: a compact result code the student can
+            //    copy/send back to the teacher, who pastes it into
+            //    "Import Result Code" under Students → Students Progress.
+            let resultCode = "";
+            try {
+                resultCode = btoa(unescape(encodeURIComponent(JSON.stringify(resultRecord))));
+            } catch (e) {
+                console.warn("Could not build a result code:", e);
+            }
+
+            renderResult(pct, correct, msg, resultCode, shortAnswerCount, gradableCount);
+        }
+        window.submitQuiz = submitQuiz;
+
+        function renderResult(pct, correct, msg, resultCode, shortAnswerCount, gradableCount) {
+            const resultArea = document.getElementById("resultArea");
+            if (!resultArea) return;
+            const fill = document.getElementById("progressFill");
+            if (fill) fill.style.width = "100%";
+
+            let codeBlock = "";
+            if (resultCode) {
+                codeBlock =
+                    '<div style="margin-top:18px;text-align:left;">' +
+                    '<p style="font-size:13px;color:var(--on-surface-variant);margin-bottom:6px;">If your teacher isn\'t using the same device/browser, copy this <b>Result Code</b> and send it to them — they\'ll paste it under <i>Students &rarr; Students Progress &rarr; Import Result Code</i>:</p>' +
+                    '<div class="result-code-box" id="resultCodeBox">' + esc(resultCode) + '</div>' +
+                    '<div class="sync-row"><button class="btn-secondary" id="copyCodeBtn">📋 Copy Result Code</button></div>' +
+                    '</div>';
+            }
+
+            const scoreDisplay = (pct === null || pct === undefined) ? "—" : pct + "%";
+            const scoreLine = (gradableCount > 0)
+                ? '<p>' + esc(student.name) + ' (' + esc(gradeLabel(student.grade)) + ' &bull; Batch ' + esc(student.batch) + ') scored <strong>' + correct + '</strong> out of <strong>' + gradableCount + '</strong> auto-graded questions</p>'
+                : '<p>' + esc(student.name) + ' (' + esc(gradeLabel(student.grade)) + ' &bull; Batch ' + esc(student.batch) + ') submitted this quiz</p>';
+            const shortAnswerLine = (shortAnswerCount > 0)
+                ? '<p style="margin-top:6px;font-size:12px;color:var(--on-surface-variant);">📝 ' + shortAnswerCount + ' short-answer response' + (shortAnswerCount === 1 ? '' : 's') + ' submitted for teacher review (not included in the score above)</p>'
+                : '';
+
+            resultArea.innerHTML =
+                '<div class="result-banner">' +
+                '<div class="score">' + scoreDisplay + '</div>' +
+                scoreLine +
+                shortAnswerLine +
+                '<p class="feedback ok" style="margin-top:6px;">' + msg + '</p>' +
+                '<p style="margin-top:12px;font-size:12px;color:var(--on-surface-variant);">✓ Result saved for Student Progress sync</p>' +
+                codeBlock +
+                '</div>';
+
+            const copyBtn = document.getElementById("copyCodeBtn");
+            if (copyBtn) {
+                copyBtn.addEventListener("click", function () {
+                    const box = document.getElementById("resultCodeBox");
+                    const text = box ? box.textContent : resultCode;
+                    const done = function () {
+                        copyBtn.textContent = "✓ Copied!";
+                        setTimeout(function () { copyBtn.textContent = "📋 Copy Result Code"; }, 2000);
+                    };
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+                    } else {
+                        fallbackCopy(text, done);
+                    }
+                });
+            }
+
+            function fallbackCopy(text, done) {
+                try {
+                    const ta = document.createElement("textarea");
+                    ta.value = text;
+                    ta.style.position = "fixed";
+                    ta.style.opacity = "0";
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand("copy");
+                    document.body.removeChild(ta);
+                    done();
+                } catch (e) { /* clipboard unavailable; user can still select text manually */ }
+            }
+
+            const submitBtn = document.getElementById("submitBtn");
+            if (submitBtn) {
+                document.getElementById("submitContainer").style.display = "none";
+            }
+            try { resultArea.scrollIntoView({ behavior: "smooth" }); } catch (e) {}
+        }
+    })();
+    </script>
+</body>
+</html>
