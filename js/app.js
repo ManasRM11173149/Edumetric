@@ -195,6 +195,21 @@ function closeSidebar() {
     document.getElementById("sidebarOverlay").classList.remove("show");
 }
 
+/* ======================== MODAL MANAGEMENT ====================== */
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add("active");
+    }
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove("active");
+    }
+}
+
 /* ========================= NAVIGATION =========================== */
 function openPage(pageId, navItem) {
     document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
@@ -1472,25 +1487,23 @@ INSTRUCTIONS:
 - You are talking directly to the teacher who owns this data.`;
 }
 
-/* Generate AI insights using the Anthropic API */
+/* Generate AI insights using the Anthropic API (via proxy or local fallback) */
 async function generateContextualInsight(userQuery) {
     const systemPrompt = buildClassroomContext();
 
     try {
-        const response = await fetch("https://api.anthropic.com/v1/messages", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                model: "claude-sonnet-4-6",
-                max_tokens: 300,
-                system: systemPrompt,
-                messages: [{ role: "user", content: userQuery }]
-            })
-        });
-        if (!response.ok) throw new Error("API error " + response.status);
-        const data = await response.json();
-        const text = (data.content || []).map(b => b.text || "").join("").trim();
-        return text || "I couldn't generate a response right now. Please try again.";
+        // NOTE: For production, the Anthropic API call should be made through a secure backend proxy
+        // rather than directly from the browser to avoid exposing API keys.
+        // The local fallback below provides intelligent responses using real classroom data.
+        
+        // Attempt to call API (requires backend proxy endpoint)
+        // If you want to enable AI responses, set up a backend endpoint that:
+        // 1. Accepts the query and system prompt
+        // 2. Makes the authenticated API call server-side
+        // 3. Returns the AI response
+        
+        // For now, use the intelligent local fallback
+        return generateLocalFallback(userQuery);
     } catch (err) {
         console.warn("AI API error:", err);
         // Graceful local fallback
@@ -1838,4 +1851,7 @@ window.onclick = function (e) {
     }
 };
 
-document.addEventListener("DOMContentLoaded", init);
+document.addEventListener("DOMContentLoaded", function() {
+    initLanguage();
+    init();
+});
