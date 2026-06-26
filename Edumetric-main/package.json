@@ -1,0 +1,20 @@
+{
+  "name": "edumetric-teacher-dashboard",
+  "version": "1.0.0",
+  "description": "EduMetric — a teacher dashboard for ELA quizzes (K-10), student management, and finance tracking. Static site, no build step.",
+  "scripts": {
+    "test": "node test/quiz-bank.test.js && node test/integration.test.js && node test/quiz-player.test.js"
+  },
+  "keywords": [
+    "education",
+    "quiz",
+    "teacher",
+    "dashboard",
+    "ela",
+    "static-site"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "jsdom": "^29.1.1"
+  }
+}
