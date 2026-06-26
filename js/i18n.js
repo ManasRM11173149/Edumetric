@@ -528,4 +528,6 @@ function updateExternalLinks() {
 // Initialize language on page load
 function initLanguage() {
     setLanguage(currentLanguage);
+    const sel = document.getElementById('languageSelect');
+    if (sel) sel.value = currentLanguage;
 }

@@ -42,7 +42,7 @@
         .opt-row.selected { border-color: var(--primary); background: rgba(192,193,255,0.12); }
         .opt-row.correct { border-color: var(--success); background: rgba(0,200,83,0.12); }
         .opt-row.wrong { border-color: var(--error); background: rgba(255,180,171,0.12); }
-        .fill-input { width: 100%; padding: 12px; background: var(--surface-bright); border: 1.5px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--on-surface); font-size: 14px; transition: all 0.2s ease; }
+        .fill-input { width: 100%; padding: 12px; background: var(--surface-bright); border: 1.5px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--on-surface); font-size: 14px; transition: all 0.2s ease; box-sizing: border-box; }
         .fill-input:focus { outline: none; border-color: var(--primary); background: rgba(192,193,255,0.05); }
         .result-banner { text-align: center; padding: 28px; border-radius: 12px; margin-bottom: 24px; background: rgba(192,193,255,0.1); border: 1px solid var(--primary); animation: slideUp 0.5s ease; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -91,14 +91,235 @@
         .sync-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 14px; }
         .progress-bar-wrap { height: 6px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; margin-bottom: 28px; }
         .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--primary-container)); transition: width 0.3s ease; }
+        /* Language selector */
+        .quiz-lang-selector { position: fixed; top: 16px; right: 16px; z-index: 200; }
+        .quiz-lang-selector select { background: var(--surface-bright); color: var(--on-surface); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 6px 10px; font-size: 13px; font-family: inherit; cursor: pointer; }
+        .quiz-lang-selector select:focus { outline: none; border-color: var(--primary); }
+        /* Student search within dropdown */
+        .student-info-bar { background: rgba(192,193,255,0.08); border: 1px solid rgba(192,193,255,0.2); border-radius: 8px; padding: 10px 14px; margin-top: 8px; font-size: 13px; color: var(--on-surface-variant); display: none; }
+        .student-info-bar.show { display: block; }
+        .student-info-bar b { color: var(--primary); }
     </style>
 </head>
 <body>
+    <!-- Language Selector -->
+    <div class="quiz-lang-selector">
+        <select id="quizLangSelect" onchange="quizSetLanguage(this.value)">
+            <option value="en">English</option>
+            <option value="hi">हिन्दी</option>
+            <option value="od">ଓଡ଼ିଆ</option>
+        </select>
+    </div>
+
     <div class="quiz-wrap"><div id="quizApp"></div></div>
-    <div class="submit-button-container" id="submitContainer" style="display: none;"><button class="submit-btn" onclick="submitQuiz()" id="submitBtn">Submit Quiz</button></div>
+    <div class="submit-button-container" id="submitContainer" style="display: none;">
+        <button class="submit-btn" onclick="submitQuiz()" id="submitBtn" data-i18n-quiz="submitQuiz">Submit Quiz</button>
+    </div>
+
     <script>
     (function () {
         "use strict";
+
+        /* ---------------------------------------------------------------
+           i18n for quiz page
+        --------------------------------------------------------------- */
+        var QUIZ_TRANSLATIONS = {
+            en: {
+                submitQuiz: "Submit Quiz",
+                beforeYouStart: "Before you start",
+                enterDetails: "Select your name from the list below so your teacher can match this result to your profile.",
+                selectYourName: "Select Your Name",
+                selectNamePlaceholder: "-- Select your name --",
+                gradeLabel: "Grade",
+                batchLabel: "Batch",
+                startQuiz: "Start Quiz",
+                errName: "Please select your name.",
+                questionOf: "Question",
+                of: "of",
+                typeAnswer: "Type your answer...",
+                shortAnswerNote: "Short answer — your teacher will review this response; it is not auto-graded.",
+                englishLangArts: "English / Language Arts",
+                questions: "questions",
+                question: "question",
+                studyReference: "📚 Study Reference",
+                source: "Source:",
+                sectionFocus: "Section focus:",
+                name: "Name:",
+                grade: "Grade:",
+                batch: "Batch:",
+                invalidLink: "This quiz link is invalid, incomplete, or has expired. Please ask your teacher for a new link.",
+                invalidLinkHint: "If you copy-pasted this link, make sure the entire link (including everything after #data=) was copied.",
+                submitting: "Submitting...",
+                correct: "✓ Correct",
+                wrongAnswer: "✗ Correct answer:",
+                submittedForReview: "📝 Submitted for teacher review",
+                noAnswer: "⚠ No answer submitted",
+                resultSaved: "✓ Result saved for Student Progress sync",
+                excellent: "Excellent work! 🌟",
+                good: "Good effort! Keep practicing. 👍",
+                keepStudying: "Keep studying — you'll get there! 📚",
+                teacherReview: "Submitted! Your teacher will review your short-answer responses. 📝",
+                scored: "scored",
+                outOf: "out of",
+                autoGraded: "auto-graded questions",
+                submitted: "submitted this quiz",
+                shortAnswerResponses: "short-answer response",
+                shortAnswerResponsesPlural: "short-answer responses",
+                submittedForTeacherReview: "submitted for teacher review (not included in the score above)",
+                resultCodeLabel: "If your teacher isn't using the same device/browser, copy this Result Code and send it to them — they'll paste it under Students → Students Progress → Import Result Code:",
+                copyResultCode: "📋 Copy Result Code",
+                copied: "✓ Copied!",
+                noStudentsRegistered: "No students are registered in this system yet. Please ask your teacher to add students first.",
+                studentName: "Student Name",
+                nameNotInList: "My name isn't in the list",
+                enterNameManually: "Enter your full name",
+                errNameManual: "Please enter your name."
+            },
+            hi: {
+                submitQuiz: "क्विज़ जमा करें",
+                beforeYouStart: "शुरू करने से पहले",
+                enterDetails: "नीचे दी गई सूची से अपना नाम चुनें ताकि आपके शिक्षक इस परिणाम को आपकी प्रोफ़ाइल से मिला सकें।",
+                selectYourName: "अपना नाम चुनें",
+                selectNamePlaceholder: "-- अपना नाम चुनें --",
+                gradeLabel: "ग्रेड",
+                batchLabel: "बैच",
+                startQuiz: "क्विज़ शुरू करें",
+                errName: "कृपया अपना नाम चुनें।",
+                questionOf: "प्रश्न",
+                of: "में से",
+                typeAnswer: "अपना उत्तर टाइप करें...",
+                shortAnswerNote: "लघु उत्तर — आपके शिक्षक इस प्रतिक्रिया की समीक्षा करेंगे; यह स्वतः ग्रेड नहीं होती।",
+                englishLangArts: "अंग्रेजी / भाषा कला",
+                questions: "प्रश्न",
+                question: "प्रश्न",
+                studyReference: "📚 अध्ययन संदर्भ",
+                source: "स्रोत:",
+                sectionFocus: "अनुभाग फोकस:",
+                name: "नाम:",
+                grade: "ग्रेड:",
+                batch: "बैच:",
+                invalidLink: "यह क्विज़ लिंक अमान्य, अधूरा, या समाप्त हो गया है। कृपया अपने शिक्षक से नया लिंक मांगें।",
+                invalidLinkHint: "यदि आपने यह लिंक कॉपी-पेस्ट किया है, तो सुनिश्चित करें कि पूरा लिंक (#data= के बाद सब कुछ सहित) कॉपी हुआ था।",
+                submitting: "जमा हो रहा है...",
+                correct: "✓ सही",
+                wrongAnswer: "✗ सही उत्तर:",
+                submittedForReview: "📝 शिक्षक समीक्षा के लिए जमा किया गया",
+                noAnswer: "⚠ कोई उत्तर जमा नहीं किया गया",
+                resultSaved: "✓ परिणाम छात्र प्रगति के लिए सहेजा गया",
+                excellent: "शानदार काम! 🌟",
+                good: "अच्छा प्रयास! अभ्यास जारी रखें। 👍",
+                keepStudying: "पढ़ते रहें — आप कर पाएंगे! 📚",
+                teacherReview: "जमा किया गया! आपके शिक्षक आपके लघु-उत्तर प्रतिक्रियाओं की समीक्षा करेंगे। 📝",
+                scored: "ने स्कोर किया",
+                outOf: "में से",
+                autoGraded: "स्वतः ग्रेड प्रश्न",
+                submitted: "ने यह क्विज़ जमा किया",
+                shortAnswerResponses: "लघु-उत्तर प्रतिक्रिया",
+                shortAnswerResponsesPlural: "लघु-उत्तर प्रतिक्रियाएं",
+                submittedForTeacherReview: "शिक्षक समीक्षा के लिए जमा किया गया (ऊपर के स्कोर में शामिल नहीं)",
+                resultCodeLabel: "यदि आपके शिक्षक एक ही डिवाइस/ब्राउज़र का उपयोग नहीं कर रहे, तो यह परिणाम कोड कॉपी करें और उन्हें भेजें:",
+                copyResultCode: "📋 परिणाम कोड कॉपी करें",
+                copied: "✓ कॉपी हो गया!",
+                noStudentsRegistered: "इस सिस्टम में अभी कोई छात्र पंजीकृत नहीं हैं। कृपया अपने शिक्षक से पहले छात्र जोड़ने को कहें।",
+                studentName: "छात्र का नाम",
+                nameNotInList: "मेरा नाम सूची में नहीं है",
+                enterNameManually: "अपना पूरा नाम दर्ज करें",
+                errNameManual: "कृपया अपना नाम दर्ज करें।"
+            },
+            od: {
+                submitQuiz: "କୁଇଜ଼ ଦାଖଲ କରନ୍ତୁ",
+                beforeYouStart: "ଆରମ୍ଭ କରିବା ପୂର୍ବରୁ",
+                enterDetails: "ନୀଚରୁ ଆପଣଙ୍କ ନାମ ବାଛନ୍ତୁ ଯାହାଦ୍ୱାରା ଆପଣଙ୍କ ଶିକ୍ଷକ ଏହି ଫଳାଫଳ ଆପଣଙ୍କ ପ୍ରୋଫାଇଲ ସହ ମିଳାଇ ପାରିବେ।",
+                selectYourName: "ଆପଣଙ୍କ ନାମ ବାଛନ୍ତୁ",
+                selectNamePlaceholder: "-- ଆପଣଙ୍କ ନାମ ବାଛନ୍ତୁ --",
+                gradeLabel: "ଗ୍ରେଡ୍",
+                batchLabel: "ବ୍ୟାଚ",
+                startQuiz: "କୁଇଜ଼ ଆରମ୍ଭ କରନ୍ତୁ",
+                errName: "ଦୟାକରି ଆପଣଙ୍କ ନାମ ବାଛନ୍ତୁ।",
+                questionOf: "ପ୍ରଶ୍ନ",
+                of: "ମଧ୍ୟରୁ",
+                typeAnswer: "ଆପଣଙ୍କ ଉତ୍ତର ଟାଇପ କରନ୍ତୁ...",
+                shortAnswerNote: "ସଂକ୍ଷିପ୍ତ ଉତ୍ତର — ଆପଣଙ୍କ ଶିକ୍ଷକ ଏହି ପ୍ରତିକ୍ରିୟା ସମୀକ୍ଷା କରିବେ; ଏହା ସ୍ୱୟଂ ଗ୍ରେଡ ହୁଏ ନାହିଁ।",
+                englishLangArts: "ଇଂରାଜୀ / ଭାଷା କଳା",
+                questions: "ପ୍ରଶ୍ନ",
+                question: "ପ୍ରଶ୍ନ",
+                studyReference: "📚 ଅଧ୍ୟୟନ ସନ୍ଦର୍ଭ",
+                source: "ଉତ୍ସ:",
+                sectionFocus: "ବିଭାଗ ଫୋକସ:",
+                name: "ନାମ:",
+                grade: "ଗ୍ରେଡ୍:",
+                batch: "ବ୍ୟାଚ:",
+                invalidLink: "ଏହି କୁଇଜ଼ ଲିଙ୍କ ଅବୈଧ, ଅସମ୍ପୂର୍ଣ୍ଣ, ବା ମୟ ଶେଷ ହୋଇଯାଇଛି। ଦୟାକରି ଆପଣଙ୍କ ଶିକ୍ଷକଙ୍କ ଠାରୁ ନୂଆ ଲିଙ୍କ ଚାଆନ୍ତୁ।",
+                invalidLinkHint: "ଯଦି ଆପଣ ଏହି ଲିଙ୍କ କପି-ପେଷ୍ଟ କରିଥିଲେ, ନିଶ୍ଚିତ କରନ୍ତୁ ଯେ ସମ୍ପୂର୍ଣ ଲିଙ୍କ (#data= ପରେ ସବୁ ସହ) କପି ହୋଇଛି।",
+                submitting: "ଦାଖଲ ହୋଉଛି...",
+                correct: "✓ ଠିକ",
+                wrongAnswer: "✗ ଠିକ ଉତ୍ତର:",
+                submittedForReview: "📝 ଶିକ୍ଷକ ସମୀକ୍ଷା ପାଇଁ ଦାଖଲ",
+                noAnswer: "⚠ କୌଣସି ଉତ୍ତର ଦାଖଲ ହୋଇ ନାହିଁ",
+                resultSaved: "✓ ଫଳାଫଳ ଛାତ୍ର ପ୍ରଗତି ପାଇଁ ସଞ୍ଚୟ ହୋଇଛି",
+                excellent: "ଅତ୍ୟୁତ୍ତମ କାର୍ଯ୍ୟ! 🌟",
+                good: "ଭଲ ପ୍ରୟାସ! ଅଭ୍ୟାସ ଜାରି ରଖନ୍ତୁ। 👍",
+                keepStudying: "ପଢ଼ୁ ଥାଆନ୍ତୁ — ଆପଣ ସଫଳ ହେବେ! 📚",
+                teacherReview: "ଦାଖଲ ହୋଇଛି! ଆପଣଙ୍କ ଶିକ୍ଷକ ଆପଣଙ୍କ ଲଘୁ-ଉତ୍ତର ସମୀକ୍ଷା କରିବେ। 📝",
+                scored: "ସ୍କୋର କଲେ",
+                outOf: "ମଧ୍ୟରୁ",
+                autoGraded: "ସ୍ୱୟଂ ଗ୍ରେଡ ପ୍ରଶ୍ନ",
+                submitted: "ଏହି କୁଇଜ଼ ଦାଖଲ କଲେ",
+                shortAnswerResponses: "ଲଘୁ-ଉତ୍ତର ପ୍ରତିକ୍ରିୟା",
+                shortAnswerResponsesPlural: "ଲଘୁ-ଉତ୍ତର ପ୍ରତିକ୍ରିୟା",
+                submittedForTeacherReview: "ଶିକ୍ଷକ ସମୀକ୍ଷା ପାଇଁ ଦାଖଲ (ଉପରର ସ୍କୋରରେ ଅନ୍ତର୍ଭୁକ୍ତ ନୁହେଁ)",
+                resultCodeLabel: "ଯଦି ଆପଣଙ୍କ ଶିକ୍ଷକ ଏକା ଡିଭାଇସ/ବ୍ରାଉଜ଼ର ବ୍ୟବହାର କରୁ ନାହାନ୍ତି, ତେବେ ଏହି ଫଳାଫଳ କୋଡ ଅନୁଲିପି କରନ୍ତୁ ଏବଂ ସେମାନଙ୍କୁ ପଠାନ୍ତୁ:",
+                copyResultCode: "📋 ଫଳାଫଳ କୋଡ ଅନୁଲିପି",
+                copied: "✓ ଅନୁଲିପି ହୋଇଛି!",
+                noStudentsRegistered: "ଏହି ସିଷ୍ଟମରେ ଏଖନ ପର୍ଯ୍ୟନ୍ତ କୌଣସି ଛାତ୍ର ପଞ୍ଜୀଭୁକ୍ତ ହୋଇ ନାହାନ୍ତି। ଦୟାକରି ଆପଣଙ୍କ ଶିକ୍ଷକଙ୍କୁ ପ୍ରଥମେ ଛାତ୍ର ଯୋଗ କରିବାକୁ କୁହନ୍ତୁ।",
+                studentName: "ଛାତ୍ର ନାମ",
+                nameNotInList: "ମୋ ନାମ ସୂଚୀରେ ନାହିଁ",
+                enterNameManually: "ଆପଣଙ୍କ ପୂରା ନାମ ଲେଖନ୍ତୁ",
+                errNameManual: "ଦୟାକରି ଆପଣଙ୍କ ନାମ ଲେଖନ୍ତୁ।"
+            }
+        };
+
+        var currentLang = localStorage.getItem('edumetric_lang') || 'en';
+
+        function qt(key) {
+            return (QUIZ_TRANSLATIONS[currentLang] && QUIZ_TRANSLATIONS[currentLang][key]) 
+                || QUIZ_TRANSLATIONS['en'][key] 
+                || key;
+        }
+
+        window.quizSetLanguage = function(lang) {
+            if (QUIZ_TRANSLATIONS[lang]) {
+                currentLang = lang;
+                localStorage.setItem('edumetric_lang', lang);
+                updateQuizLangUI();
+            }
+        };
+
+        function updateQuizLangUI() {
+            // Update language select
+            var sel = document.getElementById('quizLangSelect');
+            if (sel) sel.value = currentLang;
+
+            // Update submit button
+            var submitBtn = document.getElementById('submitBtn');
+            if (submitBtn && !submitBtn.disabled) submitBtn.textContent = qt('submitQuiz');
+
+            // Update all data-i18n-quiz elements
+            document.querySelectorAll('[data-i18n-quiz]').forEach(function(el) {
+                var key = el.getAttribute('data-i18n-quiz');
+                if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                    el.placeholder = qt(key);
+                } else {
+                    el.textContent = qt(key);
+                }
+            });
+        }
+
+        // Init lang select to match stored preference
+        (function() {
+            var sel = document.getElementById('quizLangSelect');
+            if (sel) sel.value = currentLang;
+        })();
 
         /* ---------------------------------------------------------------
            Helpers
@@ -109,7 +330,28 @@
             if (g === undefined || g === null || g === "") return "";
             return g === "K" ? "Kindergarten" : "Grade " + g;
         }
+
         const GRADE_OPTIONS = ["K", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"];
+        const STORAGE_KEY = "edumetric_state_v1";
+
+        /* Load all students from the dashboard localStorage */
+        function loadAllStudents() {
+            try {
+                var raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return [];
+                var parsed = JSON.parse(raw);
+                if (!parsed || !parsed.students) return [];
+                var all = [];
+                Object.keys(parsed.students).forEach(function(grade) {
+                    (parsed.students[grade] || []).forEach(function(s) {
+                        all.push(s);
+                    });
+                });
+                return all;
+            } catch(e) {
+                return [];
+            }
+        }
 
         /* ---------------------------------------------------------------
            Robust decode: never throw, always validate shape before use.
@@ -122,8 +364,6 @@
                 try {
                     json = decodeURIComponent(escape(atob(m[1])));
                 } catch (e1) {
-                    // atob can throw on malformed/truncated base64 (e.g. link
-                    // got clipped by a messaging app). Try a tolerant pass.
                     const cleaned = m[1].replace(/[^A-Za-z0-9+/=]/g, "");
                     json = decodeURIComponent(escape(atob(cleaned)));
                 }
@@ -135,8 +375,6 @@
             }
         }
 
-        /* Validate + repair the decoded payload so a malformed/older link
-           never crashes the page — bad questions are simply dropped. */
         function sanitizeQuiz(raw) {
             if (!raw || typeof raw !== "object") return null;
             if (!Array.isArray(raw.questions)) return null;
@@ -151,7 +389,7 @@
                         return { type: "short", q: q.q, answer: q.answer == null ? "" : String(q.answer) };
                     }
                     const options = Array.isArray(q.options) ? q.options.filter(o => o != null && o !== "") : [];
-                    if (options.length < 2) return null; // unusable MCQ, drop it
+                    if (options.length < 2) return null;
                     let answer = typeof q.answer === "number" ? q.answer : parseInt(q.answer, 10);
                     if (!(answer >= 0 && answer < options.length)) answer = 0;
                     return { type: "mcq", q: q.q, options: options, answer: answer };
@@ -160,9 +398,7 @@
 
             if (!questions.length) return null;
 
-            // Cap defensively — a corrupted/huge payload shouldn't hang the page.
             const capped = questions.slice(0, 200);
-
             const validDifficulties = ["easy", "medium", "hard"];
             const difficulty = validDifficulties.includes(raw.difficulty) ? raw.difficulty : "medium";
 
@@ -189,7 +425,6 @@
         const quiz = decodeQuiz();
         const app = document.getElementById("quizApp");
 
-        /* Student-entered identity, captured before the quiz starts. */
         let student = { name: "", grade: "", batch: "" };
         let quizStarted = false;
 
@@ -199,14 +434,14 @@
             return '<span class="diff-pill diff-' + safe + '">' + DIFFICULTY_LABELS[safe] + '</span>';
         }
         function referencePanelHtml() {
-            if (!quiz.notes && !quiz.textbook) return "";
-            let html = '<div class="reference-panel"><h3>📚 Study Reference</h3>';
+            if (!quiz || (!quiz.notes && !quiz.textbook)) return "";
+            let html = '<div class="reference-panel"><h3>' + qt('studyReference') + '</h3>';
             if (quiz.textbook) {
-                html += '<p class="ref-source"><b>Source:</b> ' + esc(quiz.textbook.fileName) + '</p>';
+                html += '<p class="ref-source"><b>' + qt('source') + '</b> ' + esc(quiz.textbook.fileName) + '</p>';
                 html += '<div class="ref-excerpt">' + esc(quiz.textbook.excerpt) + (quiz.textbook.trimmed ? ' …' : '') + '</div>';
             }
             if (quiz.notes) {
-                html += '<p class="ref-notes"><b>Section focus:</b> ' + esc(quiz.notes) + '</p>';
+                html += '<p class="ref-notes"><b>' + qt('sectionFocus') + '</b> ' + esc(quiz.notes) + '</p>';
             }
             html += '</div>';
             return html;
@@ -219,79 +454,117 @@
             app.innerHTML =
                 '<div class="error-box">' +
                 '<h1>EduMetric</h1>' +
-                '<p>This quiz link is invalid, incomplete, or has expired. Please ask your teacher for a new link.</p>' +
-                '<p style="font-size:12px;margin-top:10px;">If you copy-pasted this link, make sure the entire link (including everything after <code>#data=</code>) was copied.</p>' +
+                '<p>' + qt('invalidLink') + '</p>' +
+                '<p style="font-size:12px;margin-top:10px;">' + qt('invalidLinkHint') + ' <code>#data=</code>) was copied.</p>' +
                 '</div>';
         } else {
             renderIntake();
         }
 
         /* ---------------------------------------------------------------
-           STEP 1 — Name / Grade / Batch intake
+           STEP 1 — Student name selection from registered students
         --------------------------------------------------------------- */
         function renderIntake() {
-            const gradeOpts = ['<option value="">-- Select Grade --</option>']
-                .concat(GRADE_OPTIONS.map(g => '<option value="' + esc(g) + '">' + esc(gradeLabel(g)) + '</option>'))
-                .join("");
+            var allStudents = loadAllStudents();
+            var qCount = quiz.questions.length;
+            var qWord = qCount === 1 ? qt('question') : qt('questions');
+
+            var studentOptionsHtml = '<option value="">' + qt('selectNamePlaceholder') + '</option>';
+            if (allStudents.length > 0) {
+                allStudents.forEach(function(s) {
+                    studentOptionsHtml += '<option value="' + esc(s.id) + '" data-name="' + esc(s.name) + '" data-grade="' + esc(s.grade) + '" data-batch="' + esc(s.batch || '') + '">'
+                        + esc(s.name) + ' — ' + esc(gradeLabel(s.grade)) + (s.batch ? ' (Batch ' + esc(s.batch) + ')' : '')
+                        + '</option>';
+                });
+                studentOptionsHtml += '<option value="__manual__">' + qt('nameNotInList') + '</option>';
+            } else {
+                studentOptionsHtml += '<option value="__manual__">' + qt('nameNotInList') + '</option>';
+            }
 
             app.innerHTML =
                 '<div class="quiz-head"><h1>' + esc(quiz.title) + ' ' + difficultyPillHtml(quiz.difficulty) + '</h1>' +
-                '<p>English / Language Arts' + (quiz.grade ? " — " + esc(gradeLabel(quiz.grade)) : "") +
-                ' &bull; ' + quiz.questions.length + ' question' + (quiz.questions.length === 1 ? "" : "s") + '</p></div>' +
+                '<p>' + qt('englishLangArts') + (quiz.grade ? " — " + esc(gradeLabel(quiz.grade)) : "") +
+                ' &bull; ' + qCount + ' ' + qWord + '</p></div>' +
                 referencePanelHtml() +
                 '<div class="intake-card">' +
-                '<h1 style="font-size:18px;">Before you start</h1>' +
-                '<p class="sub">Enter your details so your teacher can match this result to your profile.</p>' +
+                '<h1 style="font-size:18px;" data-i18n-quiz="beforeYouStart">' + qt('beforeYouStart') + '</h1>' +
+                '<p class="sub" data-i18n-quiz="enterDetails">' + qt('enterDetails') + '</p>' +
+                (allStudents.length === 0 ? '<div style="background:rgba(255,180,171,0.1);border:1px solid var(--error);border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--error);">' + qt('noStudentsRegistered') + '</div>' : '') +
                 '<div class="field-group">' +
-                '<label for="studentName">Full Name</label>' +
-                '<input type="text" id="studentName" placeholder="e.g., Alex Rivera" autocomplete="name">' +
-                '<div class="field-error" id="errName">Please enter your name.</div>' +
+                '<label for="studentSelect" data-i18n-quiz="selectYourName">' + qt('selectYourName') + '</label>' +
+                '<select id="studentSelect" onchange="handleStudentSelect()">' + studentOptionsHtml + '</select>' +
+                '<div class="field-error" id="errName" data-i18n-quiz="errName">' + qt('errName') + '</div>' +
                 '</div>' +
-                '<div class="field-group">' +
-                '<label for="studentGrade">Grade</label>' +
-                '<select id="studentGrade">' + gradeOpts + '</select>' +
-                '<div class="field-error" id="errGrade">Please select your grade.</div>' +
+                '<div id="manualNameGroup" class="field-group" style="display:none;">' +
+                '<label for="studentNameManual" data-i18n-quiz="enterNameManually">' + qt('enterNameManually') + '</label>' +
+                '<input type="text" id="studentNameManual" placeholder="' + qt('enterNameManually') + '" autocomplete="name">' +
+                '<div class="field-error" id="errNameManual" data-i18n-quiz="errNameManual">' + qt('errNameManual') + '</div>' +
                 '</div>' +
-                '<div class="field-group">' +
-                '<label for="studentBatch">Batch</label>' +
-                '<input type="text" id="studentBatch" placeholder="e.g., A" autocomplete="off">' +
-                '<div class="field-error" id="errBatch">Please enter your batch.</div>' +
-                '</div>' +
-                '<button class="btn-primary" id="startBtn" style="width:100%;">Start Quiz</button>' +
+                '<div class="student-info-bar" id="studentInfoBar"></div>' +
+                '<button class="btn-primary" id="startBtn" style="width:100%;margin-top:8px;" data-i18n-quiz="startQuiz">' + qt('startQuiz') + '</button>' +
                 '</div>';
 
-            // Pre-fill grade from the quiz itself, if the teacher set one —
-            // student can still change it if the quiz was shared across grades.
-            const gradeSel = document.getElementById("studentGrade");
-            if (quiz.grade && GRADE_OPTIONS.indexOf(quiz.grade) !== -1) {
-                gradeSel.value = quiz.grade;
-            }
-
             document.getElementById("startBtn").addEventListener("click", handleStart);
-            // Allow Enter key to submit from any intake field.
-            app.querySelectorAll(".intake-card input").forEach(inp => {
-                inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); handleStart(); } });
-            });
         }
 
+        window.handleStudentSelect = function() {
+            var sel = document.getElementById('studentSelect');
+            var val = sel.value;
+            var manualGroup = document.getElementById('manualNameGroup');
+            var infoBar = document.getElementById('studentInfoBar');
+
+            if (val === '__manual__') {
+                manualGroup.style.display = 'block';
+                infoBar.classList.remove('show');
+                infoBar.innerHTML = '';
+            } else if (val) {
+                manualGroup.style.display = 'none';
+                var opt = sel.options[sel.selectedIndex];
+                var sName = opt.getAttribute('data-name');
+                var sGrade = opt.getAttribute('data-grade');
+                var sBatch = opt.getAttribute('data-batch');
+                infoBar.innerHTML = qt('name') + ' <b>' + esc(sName) + '</b> &nbsp;|&nbsp; ' 
+                    + qt('gradeLabel') + ' <b>' + esc(gradeLabel(sGrade)) + '</b> &nbsp;|&nbsp; ' 
+                    + qt('batchLabel') + ' <b>' + esc(sBatch || '—') + '</b>';
+                infoBar.classList.add('show');
+            } else {
+                manualGroup.style.display = 'none';
+                infoBar.classList.remove('show');
+                infoBar.innerHTML = '';
+            }
+        };
+
         function handleStart() {
-            const nameEl = document.getElementById("studentName");
-            const gradeEl = document.getElementById("studentGrade");
-            const batchEl = document.getElementById("studentBatch");
-            const name = (nameEl.value || "").trim();
-            const grade = gradeEl.value || "";
-            const batch = (batchEl.value || "").trim();
+            var sel = document.getElementById('studentSelect');
+            var val = sel ? sel.value : '';
+            var errName = document.getElementById('errName');
+            var errNameManual = document.getElementById('errNameManual');
 
-            let valid = true;
-            document.getElementById("errName").classList.toggle("show", !name);
-            document.getElementById("errGrade").classList.toggle("show", !grade);
-            document.getElementById("errBatch").classList.toggle("show", !batch);
-            if (!name) valid = false;
-            if (!grade) valid = false;
-            if (!batch) valid = false;
-            if (!valid) return;
+            if (errName) errName.classList.remove('show');
+            if (errNameManual) errNameManual.classList.remove('show');
 
-            student = { name: name, grade: grade, batch: batch };
+            if (!val) {
+                if (errName) errName.classList.add('show');
+                return;
+            }
+
+            if (val === '__manual__') {
+                var nameInput = document.getElementById('studentNameManual');
+                var name = nameInput ? nameInput.value.trim() : '';
+                if (!name) {
+                    if (errNameManual) errNameManual.classList.add('show');
+                    return;
+                }
+                student = { name: name, grade: quiz.grade || '', batch: '—' };
+            } else {
+                var opt = sel.options[sel.selectedIndex];
+                student = {
+                    name: opt.getAttribute('data-name') || '',
+                    grade: opt.getAttribute('data-grade') || quiz.grade || '',
+                    batch: opt.getAttribute('data-batch') || '—'
+                };
+            }
+
             quizStarted = true;
             renderQuiz();
             document.getElementById("submitContainer").style.display = "flex";
@@ -301,26 +574,28 @@
            STEP 2 — Quiz itself
         --------------------------------------------------------------- */
         function renderQuiz() {
+            var qTotal = quiz.questions.length;
+            var qWord = qTotal === 1 ? qt('question') : qt('questions');
             let html =
                 '<div class="quiz-head"><h1>' + esc(quiz.title) + ' ' + difficultyPillHtml(quiz.difficulty) + '</h1>' +
-                '<p>English / Language Arts' + (quiz.grade ? " — " + esc(gradeLabel(quiz.grade)) : "") +
-                ' &bull; ' + quiz.questions.length + ' questions</p></div>' +
+                '<p>' + qt('englishLangArts') + (quiz.grade ? " — " + esc(gradeLabel(quiz.grade)) : "") +
+                ' &bull; ' + qTotal + ' ' + qWord + '</p></div>' +
                 referencePanelHtml() +
                 '<div class="top-id-bar">' +
-                '<span>Name: <b>' + esc(student.name) + '</b></span>' +
-                '<span>Grade: <b>' + esc(gradeLabel(student.grade)) + '</b></span>' +
-                '<span>Batch: <b>' + esc(student.batch) + '</b></span>' +
+                '<span>' + qt('name') + ' <b>' + esc(student.name) + '</b></span>' +
+                '<span>' + qt('grade') + ' <b>' + esc(gradeLabel(student.grade)) + '</b></span>' +
+                '<span>' + qt('batch') + ' <b>' + esc(student.batch) + '</b></span>' +
                 '</div>' +
                 '<div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>' +
                 '<form id="quizForm">';
 
             quiz.questions.forEach(function (q, i) {
-                html += '<div class="q-card" id="qcard-' + i + '"><div class="q-num">Question ' + (i + 1) + ' of ' + quiz.questions.length + '</div><div class="q-text">' + esc(q.q) + '</div>';
+                html += '<div class="q-card" id="qcard-' + i + '"><div class="q-num">' + qt('questionOf') + ' ' + (i + 1) + ' ' + qt('of') + ' ' + quiz.questions.length + '</div><div class="q-text">' + esc(q.q) + '</div>';
                 if (q.type === "fill") {
-                    html += '<input class="fill-input" type="text" name="q' + i + '" placeholder="Type your answer..." autocomplete="off" data-q="' + i + '">';
+                    html += '<input class="fill-input" type="text" name="q' + i + '" placeholder="' + qt('typeAnswer') + '" autocomplete="off" data-q="' + i + '">';
                 } else if (q.type === "short") {
-                    html += '<textarea class="fill-input short-answer-input" name="q' + i + '" rows="3" placeholder="Type your answer..." data-q="' + i + '"></textarea>' +
-                        '<p class="short-note">Short answer — your teacher will review this response; it is not auto-graded.</p>';
+                    html += '<textarea class="fill-input short-answer-input" name="q' + i + '" rows="3" placeholder="' + qt('typeAnswer') + '" data-q="' + i + '"></textarea>' +
+                        '<p class="short-note">' + qt('shortAnswerNote') + '</p>';
                 } else {
                     (q.options || []).forEach(function (o, oi) {
                         html += '<label class="opt-row" id="opt-' + i + '-' + oi + '" data-q="' + i + '" data-opt="' + oi + '">' +
@@ -373,13 +648,13 @@
         }
 
         /* ---------------------------------------------------------------
-           STEP 3 — Grade & submit
+           STEP 3 — Grade & submit → push to Student Progress
         --------------------------------------------------------------- */
         function submitQuiz() {
             if (!quizStarted) return;
             const submitBtn = document.getElementById("submitBtn");
             submitBtn.disabled = true;
-            submitBtn.textContent = "Submitting...";
+            submitBtn.textContent = qt('submitting');
 
             let correct = 0;
             let gradableCount = 0;
@@ -397,7 +672,7 @@
                     if (card) {
                         const fb = document.createElement("div");
                         fb.className = "feedback " + (ok ? "ok" : "no");
-                        fb.textContent = ok ? "✓ Correct" : "✗ Correct answer: " + q.answer;
+                        fb.textContent = ok ? qt('correct') : qt('wrongAnswer') + " " + q.answer;
                         card.appendChild(fb);
                     }
                     if (fieldEl) fieldEl.disabled = true;
@@ -410,7 +685,7 @@
                     if (card) {
                         const fb = document.createElement("div");
                         fb.className = "feedback pending";
-                        fb.textContent = val.trim() ? "📝 Submitted for teacher review" : "⚠ No answer submitted";
+                        fb.textContent = val.trim() ? qt('submittedForReview') : qt('noAnswer');
                         card.appendChild(fb);
                     }
                     if (fieldEl) fieldEl.disabled = true;
@@ -432,12 +707,9 @@
                 }
             });
 
-            // Score is computed only from auto-gradable questions (MCQ/fill).
-            // Short-answer responses are collected and flagged for the
-            // teacher to review manually — they're never silently scored.
             const pct = gradableCount ? Math.round((correct / gradableCount) * 100) : null;
-            const msg = pct === null ? "Submitted! Your teacher will review your short-answer responses. 📝"
-                : pct >= 80 ? "Excellent work! 🌟" : pct >= 60 ? "Good effort! Keep practicing. 👍" : "Keep studying — you'll get there! 📚";
+            const msg = pct === null ? qt('teacherReview')
+                : pct >= 80 ? qt('excellent') : pct >= 60 ? qt('good') : qt('keepStudying');
 
             const resultRecord = {
                 timestamp: new Date().toISOString(),
@@ -456,9 +728,8 @@
                 answers: answers
             };
 
-            // 1) Same-device/browser sync path (works when teacher opens the
-            //    link in the same browser, e.g. for testing or a shared
-            //    classroom computer).
+            // 1) Same-device sync: push to edumetric_external_quiz_results
+            //    (dashboard reads this and syncs to Student Progress on next load)
             const gradeSyncKey = "edumetric_external_quiz_results";
             try {
                 let results = [];
@@ -468,12 +739,15 @@
                 results.push(resultRecord);
                 if (results.length > 100) results = results.slice(-100);
                 localStorage.setItem(gradeSyncKey, JSON.stringify(results));
+
+                // ALSO directly update the student record in main state so it 
+                // appears immediately in Students → Student Progress
+                pushResultDirectlyToStudentState(resultRecord);
             } catch (e) {
                 console.warn("Could not store quiz result locally:", e);
             }
 
-            // 2) Live-preview sync path (works when the teacher launched this
-            //    quiz from a window/tab they still control, e.g. a preview).
+            // 2) Live-preview sync via postMessage
             try {
                 if (window.opener) {
                     window.opener.postMessage({ type: "quizSubmitted", result: resultRecord }, "*");
@@ -481,11 +755,9 @@
                 if (window.parent && window.parent !== window) {
                     window.parent.postMessage({ type: "quizSubmitted", result: resultRecord }, "*");
                 }
-            } catch (e) { /* cross-origin postMessage failures are expected & harmless */ }
+            } catch (e) { /* cross-origin expected */ }
 
-            // 3) Cross-device path: a compact result code the student can
-            //    copy/send back to the teacher, who pastes it into
-            //    "Import Result Code" under Students → Students Progress.
+            // 3) Result code for cross-device submission
             let resultCode = "";
             try {
                 resultCode = btoa(unescape(encodeURIComponent(JSON.stringify(resultRecord))));
@@ -497,6 +769,73 @@
         }
         window.submitQuiz = submitQuiz;
 
+        /* Push result directly into the dashboard's main localStorage state
+           so that Students → Student Progress updates without needing a reload */
+        function pushResultDirectlyToStudentState(record) {
+            try {
+                var raw = localStorage.getItem(STORAGE_KEY);
+                var state = raw ? JSON.parse(raw) : { students: {}, savedQuizzes: [], financeData: [] };
+                if (!state.students) state.students = {};
+
+                var GRADE_ORDER = ["K","1","2","3","4","5","6","7","8","9","10"];
+                var grade = record.studentGrade;
+                if (!grade || GRADE_ORDER.indexOf(grade) === -1) return;
+                if (!state.students[grade]) state.students[grade] = [];
+
+                var name = (record.studentName || '').trim();
+                var batch = (record.studentBatch || '').trim();
+                if (!name) return;
+
+                // Find existing student (match by name + batch)
+                var student = state.students[grade].find(function(s) {
+                    return s.name.trim().toLowerCase() === name.toLowerCase()
+                        && (!batch || !s.batch || s.batch.trim().toLowerCase() === batch.toLowerCase());
+                });
+
+                if (!student) {
+                    // Create if not found (e.g. manual name entry)
+                    student = {
+                        id: grade + '-' + Date.now() + '-' + Math.random().toString(36).slice(2,7),
+                        name: name, grade: grade, batch: batch || '—',
+                        phone: '', score: null, gpa: null, quizHistory: []
+                    };
+                    state.students[grade].push(student);
+                }
+
+                if (!student.quizHistory) student.quizHistory = [];
+
+                // Avoid duplicate entries
+                var exists = student.quizHistory.some(function(qh) {
+                    return qh.timestamp === record.timestamp && qh.quizTitle === record.quizTitle;
+                });
+                if (exists) return;
+
+                var hasScore = typeof record.score === 'number';
+                student.quizHistory.push({
+                    timestamp: record.timestamp,
+                    quizTitle: record.quizTitle,
+                    quizDifficulty: record.quizDifficulty || 'medium',
+                    date: new Date(record.timestamp).toLocaleDateString(),
+                    score: hasScore ? record.score : null,
+                    correctCount: record.correctCount,
+                    gradableCount: record.gradableCount,
+                    shortAnswerCount: record.shortAnswerCount || 0,
+                    totalQuestions: record.totalQuestions,
+                    status: !hasScore ? 'Pending Review' : record.score >= 70 ? 'Passed' : 'Needs Review'
+                });
+
+                // Update student's latest score (average of all quiz scores)
+                var scores = student.quizHistory.map(function(qh) { return qh.score; }).filter(function(s) { return typeof s === 'number'; });
+                if (scores.length) {
+                    student.score = Math.round(scores.reduce(function(a,b){return a+b;},0) / scores.length);
+                }
+
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            } catch(e) {
+                console.warn('Could not push result to student state:', e);
+            }
+        }
+
         function renderResult(pct, correct, msg, resultCode, shortAnswerCount, gradableCount) {
             const resultArea = document.getElementById("resultArea");
             if (!resultArea) return;
@@ -507,18 +846,18 @@
             if (resultCode) {
                 codeBlock =
                     '<div style="margin-top:18px;text-align:left;">' +
-                    '<p style="font-size:13px;color:var(--on-surface-variant);margin-bottom:6px;">If your teacher isn\'t using the same device/browser, copy this <b>Result Code</b> and send it to them — they\'ll paste it under <i>Students &rarr; Students Progress &rarr; Import Result Code</i>:</p>' +
+                    '<p style="font-size:13px;color:var(--on-surface-variant);margin-bottom:6px;">' + qt('resultCodeLabel') + '</p>' +
                     '<div class="result-code-box" id="resultCodeBox">' + esc(resultCode) + '</div>' +
-                    '<div class="sync-row"><button class="btn-secondary" id="copyCodeBtn">📋 Copy Result Code</button></div>' +
+                    '<div class="sync-row"><button class="btn-secondary" id="copyCodeBtn">' + qt('copyResultCode') + '</button></div>' +
                     '</div>';
             }
 
             const scoreDisplay = (pct === null || pct === undefined) ? "—" : pct + "%";
             const scoreLine = (gradableCount > 0)
-                ? '<p>' + esc(student.name) + ' (' + esc(gradeLabel(student.grade)) + ' &bull; Batch ' + esc(student.batch) + ') scored <strong>' + correct + '</strong> out of <strong>' + gradableCount + '</strong> auto-graded questions</p>'
-                : '<p>' + esc(student.name) + ' (' + esc(gradeLabel(student.grade)) + ' &bull; Batch ' + esc(student.batch) + ') submitted this quiz</p>';
+                ? '<p>' + esc(student.name) + ' (' + esc(gradeLabel(student.grade)) + ' &bull; Batch ' + esc(student.batch) + ') ' + qt('scored') + ' <strong>' + correct + '</strong> ' + qt('outOf') + ' <strong>' + gradableCount + '</strong> ' + qt('autoGraded') + '</p>'
+                : '<p>' + esc(student.name) + ' (' + esc(gradeLabel(student.grade)) + ' &bull; Batch ' + esc(student.batch) + ') ' + qt('submitted') + '</p>';
             const shortAnswerLine = (shortAnswerCount > 0)
-                ? '<p style="margin-top:6px;font-size:12px;color:var(--on-surface-variant);">📝 ' + shortAnswerCount + ' short-answer response' + (shortAnswerCount === 1 ? '' : 's') + ' submitted for teacher review (not included in the score above)</p>'
+                ? '<p style="margin-top:6px;font-size:12px;color:var(--on-surface-variant);">📝 ' + shortAnswerCount + ' ' + (shortAnswerCount === 1 ? qt('shortAnswerResponses') : qt('shortAnswerResponsesPlural')) + ' ' + qt('submittedForTeacherReview') + '</p>'
                 : '';
 
             resultArea.innerHTML =
@@ -527,7 +866,7 @@
                 scoreLine +
                 shortAnswerLine +
                 '<p class="feedback ok" style="margin-top:6px;">' + msg + '</p>' +
-                '<p style="margin-top:12px;font-size:12px;color:var(--on-surface-variant);">✓ Result saved for Student Progress sync</p>' +
+                '<p style="margin-top:12px;font-size:12px;color:var(--on-surface-variant);">' + qt('resultSaved') + '</p>' +
                 codeBlock +
                 '</div>';
 
@@ -537,8 +876,8 @@
                     const box = document.getElementById("resultCodeBox");
                     const text = box ? box.textContent : resultCode;
                     const done = function () {
-                        copyBtn.textContent = "✓ Copied!";
-                        setTimeout(function () { copyBtn.textContent = "📋 Copy Result Code"; }, 2000);
+                        copyBtn.textContent = qt('copied');
+                        setTimeout(function () { copyBtn.textContent = qt('copyResultCode'); }, 2000);
                     };
                     if (navigator.clipboard && navigator.clipboard.writeText) {
                         navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
@@ -559,7 +898,7 @@
                     document.execCommand("copy");
                     document.body.removeChild(ta);
                     done();
-                } catch (e) { /* clipboard unavailable; user can still select text manually */ }
+                } catch (e) { }
             }
 
             const submitBtn = document.getElementById("submitBtn");
