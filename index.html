@@ -9,15 +9,25 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+    <!-- ===== LANGUAGE SELECTOR ===== -->
+    <div class="language-selector">
+        <select id="languageSelect" onchange="setLanguage(this.value); updateUILanguage()">
+            <option value="en">English</option>
+            <option value="es">Español</option>
+            <option value="fr">Français</option>
+            <option value="hi">हिन्दी</option>
+        </select>
+    </div>
+
     <!-- ===== LOGIN SCREEN (no name field — single click to start) ===== -->
     <div id="loginScreen" class="login-screen">
         <div class="login-card">
-            <h1>EduMetric</h1>
-            <p>Teacher Dashboard for Quiz &amp; Finance Management</p>
+            <h1 data-i18n="appTitle">EduMetric</h1>
+            <p data-i18n="appSubtitle">Teacher Dashboard for Quiz &amp; Finance Management</p>
             <form class="login-form" onsubmit="handleLogin(event)">
-                <button type="submit" class="login-btn">Get Started</button>
+                <button type="submit" class="login-btn" data-i18n="getStarted">Get Started</button>
             </form>
-            <p style="text-align: center; font-size: 12px; color: var(--on-surface-variant); margin-top: 20px;">
+            <p style="text-align: center; font-size: 12px; color: var(--on-surface-variant); margin-top: 20px;" data-i18n="tagline">
                 A fresh workspace &bull; All data stays in your browser
             </p>
         </div>
@@ -738,6 +748,7 @@
 
     <script src="js/quiz-bank.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="js/i18n.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

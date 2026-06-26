@@ -38,6 +38,36 @@ html, body {
 ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
 ::-webkit-scrollbar-thumb { background: #494bd6; border-radius: 3px; }
 
+/* ===== LANGUAGE SELECTOR ===== */
+.language-selector {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 10000;
+}
+
+.language-selector select {
+    padding: 8px 12px;
+    background: rgba(31, 31, 39, 0.8);
+    color: var(--on-surface);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+}
+
+.language-selector select:hover {
+    background: rgba(31, 31, 39, 1);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.language-selector select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(192, 193, 255, 0.2);
+}
+
 .glass-panel {
     background: rgba(31, 31, 39, 0.6);
     backdrop-filter: blur(20px);
