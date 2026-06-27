@@ -1011,7 +1011,9 @@ function hostQuiz(id) {
     }
     // URL-safe base64 of the JSON payload.
     const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
-    const base = location.href.replace(/index\.html.*$/, "").replace(/#.*$/, "").replace(/\/?$/, "/");
+    // Build the base URL more robustly using URL API
+    const currentUrl = new URL(location.href);
+    const base = currentUrl.origin + currentUrl.pathname.replace(/index\.html$/, "").replace(/\/$/, "") + "/";
     pendingShareUrl = base + "quiz.html#data=" + encoded;
 
     if (pendingShareUrl.length > 60000) {
