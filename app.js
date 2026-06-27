@@ -168,6 +168,17 @@ function reshuffleOptions(item) {
     return Object.assign({}, item, { options: newOptions, answer: newAnswer });
 }
 
+/* ========================= MODALS ============================ */
+function closeModal(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove("active");
+}
+
+function openModal(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.add("active");
+}
+
 /* ============================ LOGIN ============================== */
 function handleLogin(e) {
     if (e) e.preventDefault();
@@ -280,11 +291,13 @@ function updateStudentsList() {
         any = true;
         html += `<div class="grade-section"><div class="grade-title">${gradeLabel(grade)}</div>`;
         list.forEach(student => {
+            const phone = student.phone || "—";
+            const batch = student.batch || "—";
             html += `
                 <div class="student-item" onclick="selectStudent('${student.id}','${grade}')">
                     <div class="student-info">
                         <h4>${escapeHtml(student.name)}</h4>
-                        <p>Batch: ${escapeHtml(student.batch)} • 📱 ${escapeHtml(student.phone)}</p>
+                        <p>Batch: ${escapeHtml(batch)} • 📱 ${escapeHtml(phone)}</p>
                     </div>
                     <div style="display:flex; gap:8px;" onclick="event.stopPropagation()">
                         <button class="btn-small" onclick="editStudentModal('${student.id}','${grade}',event)">Edit</button>
@@ -343,7 +356,7 @@ function updateProgressTable() {
 }
 
 function openAddStudentModal() {
-    document.getElementById("addStudentModal").classList.add("active");
+    openModal("addStudentModal");
 }
 
 function addStudent() {
@@ -471,6 +484,8 @@ function selectStudent(id, grade, stayOnPage) {
     document.getElementById("studentScore").textContent = (typeof student.score === "number") ? student.score + "%" : "—";
     document.getElementById("studentGPA").textContent = (student.gpa || student.gpa === 0) ? student.gpa : "—";
     document.getElementById("studentAIInsight").textContent = buildInsight(student);
+    const quizCount = document.getElementById("studentQuizzesCount");
+    if (quizCount) quizCount.textContent = (student.quizHistory || []).length;
 
     // Populate quiz history
     populateQuizHistory(id, grade);
