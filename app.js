@@ -454,10 +454,6 @@ function clearAllStudents() {
     alert("✓ All students have been removed.");
 }
 
-
-    document.getElementById(id).classList.remove("active");
-}
-
 /* ========================= STUDENT A =========================== */
 function selectStudent(id, grade, stayOnPage) {
     selectedStudentId = id;
