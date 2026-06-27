@@ -299,9 +299,9 @@ function updateStudentsList() {
                         <h4>${escapeHtml(student.name)}</h4>
                         <p>Batch: ${escapeHtml(batch)} • 📱 ${escapeHtml(phone)}</p>
                     </div>
-                    <div style="display:flex; gap:8px;" onclick="event.stopPropagation()">
-                        <button class="btn-small" onclick="editStudentModal('${student.id}','${grade}',event)">Edit</button>
-                        <button class="btn-small" style="background:rgba(239,68,68,0.2);border-color:rgba(239,68,68,0.4);color:#f87171;" onclick="deleteStudent('${student.id}','${grade}',event)">Delete</button>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn-small" onclick="event.stopPropagation(); editStudentModal('${student.id}','${grade}',event)">Edit</button>
+                        <button class="btn-small" style="background:rgba(239,68,68,0.2);border-color:rgba(239,68,68,0.4);color:#f87171;" onclick="event.stopPropagation(); deleteStudent('${student.id}','${grade}',event)">Delete</button>
                     </div>
                 </div>`;
         });
