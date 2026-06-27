@@ -1,0 +1,14 @@
+{
+  "rewrites": [
+    { "source": "/quiz.html", "destination": "/quiz.html" },
+    { "source": "/quiz.html/**", "destination": "/quiz.html" }
+  ],
+  "headers": [
+    {
+      "source": "**",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    }
+  ]
+}
