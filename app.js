@@ -1376,7 +1376,11 @@ Be specific and immediately useful. If they ask for a study guide or practice qu
 
     fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+            "Content-Type": "application/json",
+            "x-api-key": "sk-ant-", // Note: API key will be provided by user
+            "anthropic-version": "2023-06-01"
+        },
         body: JSON.stringify({
             model: "claude-sonnet-4-6",
             max_tokens: 400,
@@ -1479,7 +1483,11 @@ async function generateContextualInsight(userQuery) {
     try {
         const response = await fetch("https://api.anthropic.com/v1/messages", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+                "Content-Type": "application/json",
+                "x-api-key": "sk-ant-", // Note: API key will be provided by user
+                "anthropic-version": "2023-06-01"
+            },
             body: JSON.stringify({
                 model: "claude-sonnet-4-6",
                 max_tokens: 300,
