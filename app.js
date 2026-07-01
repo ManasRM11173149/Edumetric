@@ -332,7 +332,7 @@ function setupStudentsListDelegation() {
             if (action === "edit") {
                 editStudentModal(id, grade);
             } else if (action === "delete") {
-                deleteStudent(id, grade);
+                deleteStudent(id, grade, event);
             }
             return; // Never let an Edit/Delete click also select the student.
         }
