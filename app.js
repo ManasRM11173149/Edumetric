@@ -294,14 +294,14 @@ function updateStudentsList() {
             const phone = student.phone || "—";
             const batch = student.batch || "—";
             html += `
-                <div class="student-item" onclick="selectStudent('${student.id}','${grade}')">
+                <div class="student-item" data-student-id="${escapeHtml(student.id)}" data-student-grade="${escapeHtml(grade)}">
                     <div class="student-info">
                         <h4>${escapeHtml(student.name)}</h4>
                         <p>Batch: ${escapeHtml(batch)} • 📱 ${escapeHtml(phone)}</p>
                     </div>
                     <div style="display:flex; gap:8px;">
-                        <button class="btn-small" onclick="event.stopPropagation(); editStudentModal('${student.id}','${grade}',event)">Edit</button>
-                        <button class="btn-small" style="background:rgba(239,68,68,0.2);border-color:rgba(239,68,68,0.4);color:#f87171;" onclick="event.stopPropagation(); deleteStudent('${student.id}','${grade}',event)">Delete</button>
+                        <button type="button" class="btn-small" data-student-action="edit">Edit</button>
+                        <button type="button" class="btn-small" style="background:rgba(239,68,68,0.2);border-color:rgba(239,68,68,0.4);color:#f87171;" data-student-action="delete">Delete</button>
                     </div>
                 </div>`;
         });
@@ -309,6 +309,36 @@ function updateStudentsList() {
     });
     document.getElementById("studentsList").innerHTML = html;
     document.getElementById("studentsEmpty").style.display = any ? "none" : "block";
+}
+
+// Event delegation for the Students list: bound once to the (persistent)
+// container instead of re-attaching inline onclick handlers on every
+// re-render. This avoids relying on per-button event.stopPropagation()
+// ordering and keeps working even if a hosting environment's CSP blocks
+// inline event-handler attributes.
+function setupStudentsListDelegation() {
+    const container = document.getElementById("studentsList");
+    if (!container || container.dataset.delegationBound) return;
+    container.dataset.delegationBound = "true";
+    container.addEventListener("click", function (event) {
+        const item = event.target.closest(".student-item");
+        if (!item || !container.contains(item)) return;
+        const id = item.getAttribute("data-student-id");
+        const grade = item.getAttribute("data-student-grade");
+
+        const actionBtn = event.target.closest("[data-student-action]");
+        if (actionBtn && item.contains(actionBtn)) {
+            const action = actionBtn.getAttribute("data-student-action");
+            if (action === "edit") {
+                editStudentModal(id, grade);
+            } else if (action === "delete") {
+                deleteStudent(id, grade);
+            }
+            return; // Never let an Edit/Delete click also select the student.
+        }
+
+        selectStudent(id, grade);
+    });
 }
 
 function updateProgressTable() {
@@ -1839,6 +1869,7 @@ function refreshAll() {
 
 function init() {
     loadState();
+    setupStudentsListDelegation();
 
     // Populate every grade dropdown.
     fillGradeSelect(document.getElementById("quizGrade"), "-- Select Grade --");
