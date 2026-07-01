@@ -16,6 +16,9 @@
 
 /* ----------------------------- State ----------------------------- */
 const STORAGE_KEY = "edumetric_state_v1";
+const DB_NAME = "EduMetricDB";
+const DB_STORE = "state";
+const DB_VERSION = 1;
 const FINANCE_USER = "teacher";
 const FINANCE_PASS = "air";
 
@@ -38,9 +41,89 @@ let editingStudentGrade = null;
 let lastMaterial = null;       // { title, html, text }
 let pendingShareUrl = "";
 
-/* --------------------------- Persistence -------------------------- */
-function loadState() {
+/* IndexedDB connection */
+let db = null;
+
+/* Initialize IndexedDB */
+function initIndexedDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        
+        request.onerror = () => {
+            console.warn("IndexedDB failed to open, falling back to localStorage");
+            reject(request.error);
+        };
+        
+        request.onsuccess = () => {
+            db = request.result;
+            console.log("IndexedDB initialized successfully");
+            resolve(db);
+        };
+        
+        request.onupgradeneeded = (event) => {
+            const database = event.target.result;
+            if (!database.objectStoreNames.contains(DB_STORE)) {
+                database.createObjectStore(DB_STORE, { keyPath: "id" });
+            }
+        };
+    });
+}
+
+/* Save state to IndexedDB */
+async function saveToIndexedDB(data) {
+    if (!db) return false;
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([DB_STORE], "readwrite");
+        const store = transaction.objectStore(DB_STORE);
+        const request = store.put({ id: STORAGE_KEY, ...data });
+        
+        request.onerror = () => {
+            console.warn("Failed to save to IndexedDB");
+            reject(request.error);
+        };
+        
+        request.onsuccess = () => {
+            resolve(true);
+        };
+    });
+}
+
+/* Load state from IndexedDB */
+async function loadFromIndexedDB() {
+    if (!db) return null;
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([DB_STORE], "readonly");
+        const store = transaction.objectStore(DB_STORE);
+        const request = store.get(STORAGE_KEY);
+        
+        request.onerror = () => {
+            console.warn("Failed to load from IndexedDB");
+            reject(request.error);
+        };
+        
+        request.onsuccess = () => {
+            const result = request.result;
+            resolve(result ? { students: result.students, savedQuizzes: result.savedQuizzes, financeData: result.financeData } : null);
+        };
+    });
+}
+
+/* Fallback to localStorage if IndexedDB is not available */
+async function loadState() {
     try {
+        // Try IndexedDB first
+        if (db) {
+            const idbData = await loadFromIndexedDB();
+            if (idbData) {
+                state.students = idbData.students || {};
+                state.savedQuizzes = idbData.savedQuizzes || [];
+                state.financeData = idbData.financeData || [];
+                quizzesCreated = state.savedQuizzes.length;
+                return;
+            }
+        }
+        
+        // Fall back to localStorage
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
             const parsed = JSON.parse(raw);
@@ -48,6 +131,11 @@ function loadState() {
             state.savedQuizzes = parsed.savedQuizzes || [];
             state.financeData = parsed.financeData || [];
             quizzesCreated = state.savedQuizzes.length;
+            
+            // Migrate to IndexedDB if available
+            if (db) {
+                await saveToIndexedDB(state);
+            }
         }
     } catch (e) {
         console.warn("Could not load saved state:", e);
@@ -56,11 +144,23 @@ function loadState() {
     GRADE_ORDER.forEach(g => { if (!state.students[g]) state.students[g] = []; });
 }
 
-function saveState() {
+async function saveState() {
     try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        // Save to IndexedDB (primary)
+        if (db) {
+            await saveToIndexedDB(state);
+        } else {
+            // Fallback to localStorage
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        }
     } catch (e) {
         console.warn("Could not save state:", e);
+        // If IndexedDB fails, fallback to localStorage
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (lse) {
+            console.error("Both IndexedDB and localStorage save failed:", lse);
+        }
     }
 }
 
@@ -1867,8 +1967,15 @@ function refreshAll() {
     populateProgressQuizFilter();
 }
 
-function init() {
-    loadState();
+async function init() {
+    try {
+        // Initialize IndexedDB for cross-browser data sync
+        await initIndexedDB();
+    } catch (e) {
+        console.warn("IndexedDB initialization failed, will use localStorage only", e);
+    }
+    
+    await loadState();
     setupStudentsListDelegation();
 
     // Populate every grade dropdown.
