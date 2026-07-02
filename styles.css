@@ -118,6 +118,33 @@ html, body {
     box-shadow: 0 8px 24px rgba(192, 193, 255, 0.3);
 }
 
+.login-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.login-btn-secondary {
+    background: transparent;
+    color: var(--on-surface);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.login-btn-secondary:hover {
+    box-shadow: none;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.login-error {
+    font-size: 13px;
+    color: #ff8a8a;
+    background: rgba(255, 90, 90, 0.1);
+    border: 1px solid rgba(255, 90, 90, 0.25);
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+
 /* ===== APP LAYOUT ===== */
 .container {
     display: grid;
