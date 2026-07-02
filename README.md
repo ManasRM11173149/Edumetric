@@ -138,7 +138,30 @@ npm test
 ## 🛠️ Tech notes
 
 - No frameworks, no bundler — just open the files.
-- State persists in `localStorage` under the key `edumetric_state_v1`.
-  To reset to a brand-new workspace, clear site data for the page.
+- State persists locally via IndexedDB (falling back to `localStorage` under
+  the key `edumetric_state_v1`). To reset to a brand-new workspace on one
+  device, clear site data for the page.
 - User-entered text is HTML-escaped before rendering.
+
+### 🔄 Cross-device sync (optional)
+
+By default, data is still only stored in the current browser. To make a
+teacher's data follow them between devices (e.g. phone and laptop), EduMetric
+can sync through [Supabase](https://supabase.com):
+
+1. In your Supabase project, open **SQL Editor** and run [`supabase/schema.sql`](supabase/schema.sql).
+   This creates a `user_state` table with row-level security so each teacher
+   can only read/write their own data.
+2. Go to **Authentication → Providers → Email** and turn **off** "Confirm
+   email". EduMetric logs teachers in with a short **User ID** rather than a
+   real email address, so there's no inbox to confirm from.
+3. Open `supabase-config.js` and fill in your project's `SUPABASE_URL` and
+   `SUPABASE_ANON_KEY` (found under **Project Settings → API**).
+4. Deploy/reload the site. The login screen now asks for a **User ID +
+   password**. The first time a teacher uses an ID, they tap **Create New
+   ID**; after that, logging in with the same ID and password on any device
+   loads their saved students, quizzes, and finance data.
+
+If `supabase-config.js` is left at its placeholder values, the app runs
+exactly as before — local-only, no login fields required beyond the button.
 

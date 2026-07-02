@@ -44,6 +44,96 @@ let pendingShareUrl = "";
 /* IndexedDB connection */
 let db = null;
 
+/* ----------------------- Cloud sync (Supabase) ------------------------
+   Lets a teacher log in with a User ID + password on any device and see
+   the same students / quizzes / finance data everywhere. IndexedDB /
+   localStorage remain as a fast local cache; Supabase is the source of
+   truth once a teacher is logged in. If supabase-config.js is left at
+   its placeholder values, the app just runs local-only like before. */
+let supabaseClient = null;
+let currentUser = null; // { id, userId }
+let cloudSaveTimer = null;
+
+function initSupabase() {
+    if (typeof window.supabase === "undefined") return null;
+    if (typeof SUPABASE_URL === "undefined" || typeof SUPABASE_ANON_KEY === "undefined") return null;
+    if (SUPABASE_URL.indexOf("YOUR_") === 0 || SUPABASE_ANON_KEY.indexOf("YOUR_") === 0) {
+        console.warn("Supabase not configured (see supabase-config.js) — cross-device sync disabled.");
+        return null;
+    }
+    try {
+        return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } catch (e) {
+        console.warn("Failed to initialize Supabase client:", e);
+        return null;
+    }
+}
+
+/* Supabase Auth needs an email; teachers just want a short User ID. */
+function userIdToEmail(userId) {
+    return userId.trim().toLowerCase().replace(/\s+/g, "_") + "@edumetric.app";
+}
+
+function showLoginError(msg) {
+    const el = document.getElementById("loginError");
+    if (el) { el.textContent = msg; el.style.display = "block"; }
+}
+function clearLoginError() {
+    const el = document.getElementById("loginError");
+    if (el) { el.style.display = "none"; el.textContent = ""; }
+}
+
+/* Pull this teacher's saved data down from Supabase. Returns null if
+   there's nothing saved yet (brand-new ID) or sync isn't configured. */
+async function fetchCloudState() {
+    if (!supabaseClient || !currentUser) return null;
+    try {
+        const { data, error } = await supabaseClient
+            .from("user_state")
+            .select("data")
+            .eq("user_id", currentUser.id)
+            .maybeSingle();
+        if (error) {
+            console.warn("Could not fetch cloud state:", error.message);
+            return null;
+        }
+        return data ? data.data : null;
+    } catch (e) {
+        console.warn("Could not fetch cloud state:", e);
+        return null;
+    }
+}
+
+/* Push the current in-memory state up to Supabase for this teacher. */
+async function pushCloudState() {
+    if (!supabaseClient || !currentUser) return;
+    try {
+        await supabaseClient.from("user_state").upsert({
+            user_id: currentUser.id,
+            data: state,
+            updated_at: new Date().toISOString()
+        });
+    } catch (e) {
+        console.warn("Cloud sync failed (data is still saved locally on this device):", e);
+    }
+}
+
+/* Debounced so rapid edits don't hammer the network — only the last
+   save in a burst actually goes out. */
+function scheduleCloudSave() {
+    if (!supabaseClient || !currentUser) return;
+    clearTimeout(cloudSaveTimer);
+    cloudSaveTimer = setTimeout(pushCloudState, 600);
+}
+
+function applyCloudData(cloud) {
+    state.students = cloud.students || {};
+    state.savedQuizzes = cloud.savedQuizzes || [];
+    state.financeData = cloud.financeData || [];
+    quizzesCreated = state.savedQuizzes.length;
+    GRADE_ORDER.forEach(g => { if (!state.students[g]) state.students[g] = []; });
+}
+
 /* Initialize IndexedDB */
 function initIndexedDB() {
     return new Promise((resolve, reject) => {
@@ -162,6 +252,7 @@ async function saveState() {
             console.error("Both IndexedDB and localStorage save failed:", lse);
         }
     }
+    scheduleCloudSave();
 }
 
 /* ----------------------------- Utils ------------------------------ */
@@ -280,20 +371,106 @@ function openModal(id) {
 }
 
 /* ============================ LOGIN ============================== */
-function handleLogin(e) {
+/* mode is "login" or "signup". Both share one flow: authenticate with
+   Supabase (using the User ID turned into a fake email), then pull that
+   teacher's saved data down from the cloud so it matches whatever they
+   last saved on any other device. */
+async function handleAuth(e, mode) {
     if (e) e.preventDefault();
-    document.getElementById("loginScreen").style.display = "none";
-    document.getElementById("mainApp").style.display = "block";
-    refreshAll();
+    clearLoginError();
+
+    const userIdEl = document.getElementById("loginUserId");
+    const passwordEl = document.getElementById("loginPassword");
+    const userId = userIdEl ? userIdEl.value.trim() : "";
+    const password = passwordEl ? passwordEl.value : "";
+
+    if (!supabaseClient) {
+        // Sync isn't configured — fall back to the old local-only behavior.
+        document.getElementById("loginScreen").style.display = "none";
+        document.getElementById("mainApp").style.display = "block";
+        refreshAll();
+        return;
+    }
+
+    if (!userId || !password) {
+        showLoginError("Enter a User ID and password.");
+        return;
+    }
+    if (password.length < 6) {
+        showLoginError("Password must be at least 6 characters.");
+        return;
+    }
+
+    const buttons = document.querySelectorAll("#loginForm .login-btn");
+    buttons.forEach(b => b.disabled = true);
+
+    try {
+        const email = userIdToEmail(userId);
+        let authResult;
+        if (mode === "signup") {
+            authResult = await supabaseClient.auth.signUp({ email, password });
+        } else {
+            authResult = await supabaseClient.auth.signInWithPassword({ email, password });
+        }
+        if (authResult.error) throw authResult.error;
+
+        const user = authResult.data.user || (authResult.data.session && authResult.data.session.user);
+        if (!user) throw new Error("Could not sign in. Please try again.");
+        currentUser = { id: user.id, userId: userId };
+
+        const cloud = await fetchCloudState();
+        if (cloud) {
+            applyCloudData(cloud);
+            await saveState(); // cache the cloud copy locally on this device too
+        } else {
+            // Brand-new ID (or nothing saved yet) — push whatever's here now.
+            await pushCloudState();
+        }
+
+        document.getElementById("loginScreen").style.display = "none";
+        document.getElementById("mainApp").style.display = "block";
+        refreshAll();
+    } catch (err) {
+        console.warn("Auth error:", err);
+        const msg = (err && err.message) || "";
+        if (mode === "signup" && /already registered|already exists/i.test(msg)) {
+            showLoginError("That User ID is already taken. Try logging in instead.");
+        } else if (/invalid login credentials/i.test(msg)) {
+            showLoginError("Incorrect User ID or password.");
+        } else {
+            showLoginError(msg || "Something went wrong. Please try again.");
+        }
+    } finally {
+        buttons.forEach(b => b.disabled = false);
+    }
 }
 
-function logout() {
+function handleLogin(e) { handleAuth(e, "login"); }
+function handleSignUp(e) { handleAuth(e, "signup"); }
+
+async function logout() {
     document.getElementById("mainApp").style.display = "none";
     document.getElementById("loginScreen").style.display = "flex";
     financeUnlocked = false;
     document.getElementById("financePassword").value = "";
     document.getElementById("financeUsername").value = "";
+    const userIdEl = document.getElementById("loginUserId");
+    const passwordEl = document.getElementById("loginPassword");
+    if (userIdEl) userIdEl.value = "";
+    if (passwordEl) passwordEl.value = "";
+    clearLoginError();
     closeSidebar();
+
+    if (supabaseClient) {
+        try { await supabaseClient.auth.signOut(); } catch (e) { console.warn(e); }
+    }
+    currentUser = null;
+
+    // Clear the in-memory workspace so the next login starts from that
+    // teacher's own data, not whoever was last signed in on this device.
+    state = { students: {}, savedQuizzes: [], financeData: [] };
+    GRADE_ORDER.forEach(g => { state.students[g] = []; });
+    quizzesCreated = 0;
 }
 
 /* ======================== SIDEBAR (mobile) ====================== */
@@ -1968,13 +2145,15 @@ function refreshAll() {
 }
 
 async function init() {
+    supabaseClient = initSupabase();
+
     try {
-        // Initialize IndexedDB for cross-browser data sync
+        // Initialize IndexedDB for local caching on this device
         await initIndexedDB();
     } catch (e) {
         console.warn("IndexedDB initialization failed, will use localStorage only", e);
     }
-    
+
     await loadState();
     setupStudentsListDelegation();
 
@@ -1986,6 +2165,27 @@ async function init() {
     fillGradeSelect(document.getElementById("editStudentGrade"), "-- Select Grade --");
     fillGradeSelect(document.getElementById("studentQuizGrade"), "-- Select Grade --");
     fillGradeSelect(document.getElementById("materialGrade"), "-- Select Grade --");
+
+    // If this browser already has a signed-in Supabase session (they
+    // logged in here before and didn't log out), resume it automatically
+    // and pull their latest cloud data instead of showing the login screen.
+    if (supabaseClient) {
+        try {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session && session.user) {
+                currentUser = {
+                    id: session.user.id,
+                    userId: (session.user.email || "").split("@")[0]
+                };
+                const cloud = await fetchCloudState();
+                if (cloud) applyCloudData(cloud);
+                document.getElementById("loginScreen").style.display = "none";
+                document.getElementById("mainApp").style.display = "block";
+            }
+        } catch (e) {
+            console.warn("Could not resume Supabase session:", e);
+        }
+    }
 
     refreshAll();
 }
