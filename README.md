@@ -2,9 +2,11 @@
 
 A clean, mobile-friendly teacher dashboard for creating **English / Language
 Arts quizzes (Grades K–10)**, managing students, generating downloadable study
-materials, and tracking tuition finances. It's a **static website** — pure
-HTML, CSS, and vanilla JavaScript with **no build step and no backend**. All
-data is stored locally in the browser.
+materials, and tracking tuition finances. The front end is a **static site** —
+pure HTML, CSS, and vanilla JavaScript with **no build step** — backed by
+**Supabase** for account login and **cross-device data sync**. Each teacher's
+data is stored in Supabase and cached locally in the browser (localStorage /
+IndexedDB) for fast, offline-friendly access.
 
 > Built from the provided `edumetricadvancedfinal.html` design, with the
 > behaviour and content upgrades described below.
@@ -15,11 +17,11 @@ data is stored locally in the browser.
 
 | Area | What it does |
 | --- | --- |
-| **Fresh workspace** | Starts completely empty — no demo students, quizzes, or finance entries. Your data persists in the browser via `localStorage`. |
+| **Fresh workspace** | Starts completely empty — no demo students, quizzes, or finance entries. Your data syncs across devices via **Supabase** and is cached locally in the browser (localStorage / IndexedDB). |
 | **One-click start** | The opening screen has **no name field** — just *Get Started*. |
 | **Quiz creation (up to 100 questions)** | Pick a **Grade (K–10)** and an **ELA topic**, choose MCQ, fill-in-the-blank, and/or **Short Answer**, and request **1–100 questions**. Each topic ships 5 curated questions; requesting more reshuffles and reuses the bank with freshly randomized answer-choice order each pass, so a 100-question quiz never just repeats the same 5 questions verbatim. |
 | **Difficulty meter** | Set an overall **Easy / Medium / Hard** label for each quiz. Shown as a badge in the teacher's saved-quiz list, on the external quiz link, and printed on the PDF. |
-| **Textbook upload + Notes** | Attach a **.txt or .pdf** as reference material (PDF text is extracted client-side — no server, no upload anywhere) and add free-text **notes on which section/pages to focus on**. Both are shown to students on the external link and printed on the PDF as a "Study Reference" panel, so they know exactly what to study from. *(Note: this attaches the material for reference — it does not auto-generate questions from it, since this is a static site with no backend/AI service; questions still come from the curated ELA bank.)* |
+| **Textbook upload + Notes** | Attach a **.txt or .pdf** as reference material (PDF text is extracted client-side — no server, no upload anywhere) and add free-text **notes on which section/pages to focus on**. Both are shown to students on the external link and printed on the PDF as a "Study Reference" panel, so they know exactly what to study from. *(Note: this attaches the material for reference — it does not auto-generate questions from it; questions still come from the curated ELA bank.)* |
 | **Short Answer questions** | A third question type alongside MCQ and fill-in-the-blank. Students type a free response; it's collected and flagged for the teacher to review manually in Student Progress rather than being auto-graded — auto-graded score percentages only count MCQ/fill questions. |
 | **Host externally** | *Platform Launch* first **prompts you to pick which quiz**, then generates a shareable link (`quiz.html#…`) where students take the quiz online and get an instant, auto-graded score — including 100-question quizzes. |
 | **Student intake on the quiz link** | Before a student can start the external quiz, they enter their **Name, Grade, and Batch**, shown throughout the quiz so results are never anonymous. |
