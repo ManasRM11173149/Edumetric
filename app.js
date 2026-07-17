@@ -319,20 +319,6 @@ function fillTopicSelect(el, grade, { includeMixed = true } = {}) {
     el.innerHTML = html;
 }
 
-function fillTopicDatalist(datalistId, grade, { includeMixed = true } = {}) {
-    const datalist = document.getElementById(datalistId);
-    if (!datalist) return;
-    if (!grade || !ELA_QUIZ_BANK[grade]) {
-        datalist.innerHTML = `<option value="">-- Select a grade first --</option>`;
-        return;
-    }
-    const topics = Object.keys(ELA_QUIZ_BANK[grade].topics);
-    let html = ``;
-    if (includeMixed) html += `<option value="__ALL__">All Topics (Mixed)</option>`;
-    topics.forEach(t => { html += `<option value="${escapeHtml(t)}"></option>`; });
-    datalist.innerHTML = html;
-}
-
 /* Pull a set of questions for a grade + topic from the ELA bank.
    Supports requesting MORE questions than exist in the underlying bank
    (up to 100): once the unique pool is exhausted, the pool is reshuffled
@@ -1192,13 +1178,13 @@ function extractTextFromHTML(html) {
 }
 
 function populateQuizTopics() {
-    fillTopicDatalist("quizTopicList", document.getElementById("quizGrade").value);
+    fillTopicSelect(document.getElementById("quizTopic"), document.getElementById("quizGrade").value);
 }
 
 function generateQuestions() {
     const title = document.getElementById("quizTitle").value.trim();
     const grade = document.getElementById("quizGrade").value;
-    let topic = document.getElementById("quizTopic").value.trim();
+    const topic = document.getElementById("quizTopic").value;
     const numQ = Math.max(1, Math.min(parseInt(document.getElementById("numQuestions").value, 10) || 5, 100));
     const wantMcq = document.getElementById("mcqCheck").checked;
     const wantFill = document.getElementById("fillCheck").checked;
@@ -1206,16 +1192,8 @@ function generateQuestions() {
 
     if (!title) { alert("Please enter a quiz title!"); return; }
     if (!grade) { alert("Please select a grade level."); return; }
-    if (!topic) { alert("Please enter a topic."); return; }
+    if (!topic) { alert("Please select an ELA topic."); return; }
     if (!wantMcq && !wantFill && !wantShort) { alert("Select at least one question type."); return; }
-
-    // Check if the custom topic exists in the quiz bank; if not, use All Topics
-    if (topic !== "__ALL__" && (!ELA_QUIZ_BANK[grade] || !ELA_QUIZ_BANK[grade].topics[topic])) {
-        const availableTopics = ELA_QUIZ_BANK[grade] ? Object.keys(ELA_QUIZ_BANK[grade].topics).join(", ") : "No topics available";
-        console.warn(`Topic "${topic}" not found. Using all topics instead.`);
-        alert(`Topic "${topic}" not found in the quiz bank.\n\nAvailable topics:\n${availableTopics}\n\nGenerating questions from all topics.`);
-        topic = "__ALL__";
-    }
 
     const questions = getQuestionsFor(grade, topic, numQ);
     if (!questions.length) { alert("No questions available for that selection."); return; }
