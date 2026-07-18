@@ -1,6 +1,4 @@
-successfully downloaded text file (SHA: d7a09cb5473a9a78f6b39b2024717f6c4e3115aa)
-[Resource from github at repo://ManasRM11173149/Edumetric/sha/27ec3bcf42412eb621d164493112d7622cda9bef/contents/app.js]  /* ==========================================================================
-   EduMetric — Teacher Dashboard
+EduMetric — Teacher Dashboard
    Application logic
    --------------------------------------------------------------------------
    Design goals (per project requirements):
