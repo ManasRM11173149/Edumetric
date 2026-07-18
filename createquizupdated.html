@@ -1,0 +1,98 @@
+<!-- ===== CREATE QUIZ TAB (UPDATED) ===== -->
+<!-- Replace lines 169-255 in index.html with this updated section -->
+
+<div id="create-quiz" class="tab-content active">
+    <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 20px;">Create New Quiz</h4>
+
+    <div class="form-group">
+        <label>Quiz Title</label>
+        <input type="text" id="quizTitle" placeholder="e.g., Grade 6 Mathematics - Algebra Basics">
+    </div>
+
+    <div class="form-group">
+        <label>Grade Level (K–12)</label>
+        <select id="quizGrade" onchange="populateQuizSubjects()">
+            <option value="">-- Select Grade --</option>
+        </select>
+    </div>
+
+    <!-- NEW: Subject Selector -->
+    <div class="form-group">
+        <label>Subject</label>
+        <select id="quizSubject" onchange="populateQuizTopics()">
+            <option value="">-- Select a grade first --</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Topic</label>
+        <input type="text" id="quizTopic" placeholder="Type or select a topic" list="quizTopicList">
+        <datalist id="quizTopicList">
+            <option value="">-- Select a subject first --</option>
+        </datalist>
+    </div>
+
+    <div class="form-group">
+        <label>Question Types</label>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" id="mcqCheck" checked>
+                <label for="mcqCheck">Multiple Choice Questions (MCQ)</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="fillCheck">
+                <label for="fillCheck">Fill in the Blanks</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="shortAnswerCheck">
+                <label for="shortAnswerCheck">Short Answer Questions</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Difficulty</label>
+        <div class="difficulty-meter" id="difficultyMeter" data-value="medium">
+            <button type="button" class="diff-btn" data-level="easy" onclick="setQuizDifficulty('easy')">🟢 Easy</button>
+            <button type="button" class="diff-btn active" data-level="medium" onclick="setQuizDifficulty('medium')">🟡 Medium</button>
+            <button type="button" class="diff-btn" data-level="hard" onclick="setQuizDifficulty('hard')">🔴 Hard</button>
+        </div>
+        <p style="font-size: 12px; color: var(--on-surface-variant); margin-top: 6px;">Sets the overall difficulty label for this quiz — shown to students on the quiz link and printed on the PDF.</p>
+    </div>
+
+    <div class="form-group">
+        <label>Textbook / Source Material (optional)</label>
+        <div style="display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+                <input type="file" id="textbookUpload" accept=".txt,.pdf" onchange="handleTextbookUpload(event)" placeholder="Upload .txt or .pdf">
+                <p style="font-size: 12px; color: var(--on-surface-variant); margin-top: 4px;">Upload .txt or .pdf file</p>
+            </div>
+            <div style="flex: 1; min-width: 200px;">
+                <input type="text" id="textbookLinkInput" placeholder="Paste URL here" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; background: var(--surface-bright); color: var(--on-surface); font-size: 13px;">
+                <button type="button" class="btn-small" onclick="handleLinkAnalysis()" style="margin-top: 6px; width: 100%;">Analyze Link</button>
+            </div>
+        </div>
+        <p id="textbookStatus" style="font-size: 12px; color: var(--on-surface-variant);">Upload .txt/.pdf or paste a URL. Attached as reference material for this quiz — shown to students on the quiz link and printed on the PDF so they know what to study from.</p>
+        <div id="textbookPreview" style="display:none; margin-top: 10px; background: var(--surface-bright); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 10px 12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong id="textbookFileName" style="font-size: 13px;"></strong>
+                <button type="button" class="btn-small" onclick="removeTextbook()">Remove</button>
+            </div>
+            <p id="textbookCharCount" style="font-size: 12px; color: var(--on-surface-variant); margin-top: 4px;"></p>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Notes — Section Focus (optional)</label>
+        <textarea id="quizNotes" rows="4" placeholder="e.g., Focus on Chapter 3, pages 40-55 — algebraic expressions. Emphasize simplification techniques."></textarea>
+        <p style="font-size: 12px; color: var(--on-surface-variant); margin-top: 6px;">Elaborate on which part of the textbook/syllabus this quiz covers. Shown alongside the textbook reference to students and on the printed PDF.</p>
+    </div>
+
+    <div class="form-group">
+        <label>Number of Questions</label>
+        <input type="number" id="numQuestions" value="5" min="1" max="100">
+        <p style="font-size: 12px; color: var(--on-surface-variant); margin-top: 6px;">Up to 100 questions. Each topic has 5 curated questions in the bank — requesting more than the bank's unique total will reuse questions in a fresh shuffled order with randomized answer-choice positions, so the quiz never just repeats the same 5 verbatim.</p>
+    </div>
+
+    <button class="btn-primary" onclick="generateQuestions()">Generate Questions</button>
+</div>

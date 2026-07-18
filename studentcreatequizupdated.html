@@ -1,0 +1,35 @@
+<!-- ===== STUDENT CREATE QUIZ TAB (UPDATED) ===== -->
+<!-- Replace lines 484-508 in index.html with this updated section -->
+
+<div id="student-create-quiz" class="tab-content">
+    <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 20px;">Create a Custom Quiz for This Student</h4>
+
+    <div class="form-group">
+        <label>Grade Level (K–12)</label>
+        <select id="studentQuizGrade" onchange="populateStudentQuizSubjects()">
+            <option value="">-- Select Grade --</option>
+        </select>
+    </div>
+
+    <!-- NEW: Subject Selector -->
+    <div class="form-group">
+        <label>Subject</label>
+        <select id="studentQuizSubject" onchange="populateStudentQuizTopics()">
+            <option value="">-- Select a grade first --</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Topic</label>
+        <select id="studentQuizTopic">
+            <option value="">-- Select a subject first --</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Number of Questions</label>
+        <input type="number" id="studentNumQuestions" value="5" min="1" max="25">
+    </div>
+
+    <button class="btn-primary" onclick="createStudentQuiz()">Create Quiz</button>
+</div>
