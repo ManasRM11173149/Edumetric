@@ -165,28 +165,34 @@
                             <button class="tab-btn" onclick="switchQuizTab('send-results', this)">Send Results</button>
                         </div>
 
-                        <!-- CREATE QUIZ TAB -->
+                                            <!-- CREATE QUIZ TAB -->
                         <div id="create-quiz" class="tab-content active">
-                            <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 20px;">Create New ELA Quiz</h4>
+                            <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 20px;">Create New Quiz</h4>
 
                             <div class="form-group">
                                 <label>Quiz Title</label>
-                                <input type="text" id="quizTitle" placeholder="e.g., Grade 4 Figurative Language Quiz">
+                                <input type="text" id="quizTitle" placeholder="e.g., Grade 4 Mathematics Quiz">
                             </div>
 
                             <div class="form-group">
                                 <label>Grade Level (K–10)</label>
-                                <select id="quizGrade" onchange="populateQuizTopics()">
+                                <select id="quizGrade" onchange="populateQuizSubjects()">
                                     <option value="">-- Select Grade --</option>
                                 </select>
                             </div>
 
                             <div class="form-group">
+                                <label>Subject</label>
+                                <select id="quizSubject" onchange="populateQuizTopics()">
+                                    <option value="">-- Select Subject --</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
                                 <label>Topic</label>
-                                <input type="text" id="quizTopic" placeholder="Type or select a topic" list="quizTopicList">
-                                <datalist id="quizTopicList">
-                                    <option value="">-- Select a grade first --</option>
-                                </datalist>
+                                <select id="quizTopic">
+                                    <option value="">-- Select a subject first --</option>
+                                </select>
                             </div>
 
                             <div class="form-group">
